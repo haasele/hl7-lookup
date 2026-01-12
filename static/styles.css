@@ -1,0 +1,33 @@
+/* static/styles.css */
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+textarea {
+    font-family: monospace;
+    width: 100%;
+    max-width: 800px;
+}
+
+.hl7-output {
+    margin-top: 20px;
+    background-color: #f7f7f7;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.segment {
+    margin-bottom: 15px;
+}
+
+.hl7-field {
+    display: inline-block;
+    margin-right: 10px;
+    padding: 2px 4px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    font-weight: bold;
+    text-decoration: underline;
+    cursor: help;
+}
