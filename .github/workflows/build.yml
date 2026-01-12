@@ -32,7 +32,10 @@ jobs:
       - name: Build binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          $hl7path = python -c "import hl7apy, os; print(os.path.dirname(hl7apy.__file__)))"
+          # Pfad zu hl7apy dynamisch bestimmen
+          $hl7path = python -c "import hl7apy, os; print(os.path.dirname(hl7apy.__file__))"
+          
+          # PyInstaller aufrufen
           pyinstaller `
             --noconsole `
             --onefile `
@@ -42,8 +45,6 @@ jobs:
             --add-data "stylesheet.qss;." `
             --add-data "hl7.ico;." `
             main.py
-
-
 
       # ---------------- LINUX ----------------
       - name: Build binary (Linux)
