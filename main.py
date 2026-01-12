@@ -577,35 +577,42 @@ class HL7Viewer(QMainWindow):
             self.tabs.setTabText(index, new_name)
 
 
+def resource_path(relative_path: str) -> str:
+    if hasattr(sys, "_MEIPASS"):
+        return str(Path(sys._MEIPASS) / relative_path)
+    return str(Path(__file__).parent / relative_path)
+
 def main():
     app = QApplication(sys.argv)
-    
-    # Font laden
-    font_id = QFontDatabase.addApplicationFont("./SourceCodePro-Light.ttf")
+
+    # ===== FONT LADEN =====
+    font_path = resource_path("SourceCodePro-Light.ttf")
+    font_id = QFontDatabase.addApplicationFont(font_path)
     families = QFontDatabase.applicationFontFamilies(font_id)
 
     if families:
-        SourceCodePro = families[0]
-        print("Loaded Fontfamily:", SourceCodePro)
-        SourceCodePro = QFont(SourceCodePro, 10)
-        SourceCodePro.setLetterSpacing(QFont.AbsoluteSpacing, 1)  # Pacing zwischen Buchstaben
-        app.setFont(SourceCodePro)
+        font_family = families[0]
+        print("Loaded Fontfamily:", font_family)
 
+        font = QFont(font_family, 10)
+        font.setLetterSpacing(QFont.AbsoluteSpacing, 1)
+        app.setFont(font)
     else:
         print("Fehler: Font konnte nicht geladen werden")
-        app.setFont(QFont("JetBrains Mono", 10))  # Fallback-Font
-    
-    #Stylesheet laden
-    stylesheet_file = QFile("./stylesheet.qss")
+        app.setFont(QFont("JetBrains Mono", 10))  # Fallback
+
+    # ===== STYLESHEET LADEN =====
+    stylesheet_path = resource_path("stylesheet.qss")
+    stylesheet_file = QFile(stylesheet_path)
 
     if not stylesheet_file.exists():
-        print("Stylesheet not found!")
+        print("Stylesheet not found!", stylesheet_path)
     else:
         if stylesheet_file.open(QFile.ReadOnly | QFile.Text):
             stream = QTextStream(stylesheet_file)
             qss = stream.readAll()
             app.setStyleSheet(qss)
-            print("Stylesheet loaded (Length:", len(qss), "Character)")
+            print("Stylesheet loaded (Length:", len(qss), "Characters)")
             stylesheet_file.close()
         else:
             print("Stylesheet couldn't be opened.")
