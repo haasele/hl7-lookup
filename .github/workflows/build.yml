@@ -41,6 +41,7 @@ jobs:
             --onefile `
             --clean `
             --hidden-import PySide6 `
+            --collect-all PySide6 `
             --add-data "$hl7path:hl7apy" `
             --add-data "stylesheet.qss:." `
             --add-data "hl7.ico:." `
@@ -55,6 +56,7 @@ jobs:
             --onefile \
             --clean \
             --hidden-import PySide6 \
+            --collect-all PySide6 \
             --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
             --add-data "stylesheet.qss:." \
             --add-data "hl7.ico:." \
@@ -70,6 +72,7 @@ jobs:
             --clean \
             --icon=hl7.ico \
             --hidden-import PySide6 \
+            --collect-all PySide6 \
             --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
             --add-data "stylesheet.qss:." \
             --add-data "hl7.ico:." \
