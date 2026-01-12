@@ -63,7 +63,7 @@ jobs:
       - name: Build binary (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
+          pyinstaller --exclude-module PySide6.Qt3DAnimation --exclude-module PySide6.Qt3DCore --exclude-module PySide6.Qt3DExtras --exclude-module PySide6.Qt3DInput --exclude-module PySide6.Qt3DLogic --exclude-module PySide6.Qt3DRender --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
