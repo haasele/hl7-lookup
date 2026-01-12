@@ -1,6 +1,8 @@
 # hl7-lookup
 A simple and extendable HL7 Parser for v2.5
 
+<img width="1910" height="1008" alt="image" src="https://github.com/user-attachments/assets/5607296d-36f8-457b-a365-4d0f464572b8" />
+
 ## Prerequisites
 - Python -> officially tested on Python 3.13
 - (optional) -> Pyinstall
