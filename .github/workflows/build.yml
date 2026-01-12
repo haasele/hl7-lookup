@@ -36,8 +36,19 @@ jobs:
           $hl7path = python -c "import hl7apy, os; print(os.path.dirname(hl7apy.__file__))"
           
           # PyInstaller aufrufen
-          pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data="$hl7path:hl7apy" --add-data="stylesheet.qss:." --add-data="hl7.ico:." --clean --collect-all=hl7apy --add-data="SourceCodePro-Light.ttf:." main.py
-
+            pyinstaller `
+          --windowed `
+          --onedir `
+          --name HL7-Lookup `
+          --noconsole `
+          --icon=hl7.ico `
+          --add-data=stylesheet.qss:. `
+          --add-data=hl7.ico:. `
+          --add-data=SourceCodePro-Light.ttf:. `
+          --add-data=$hl7path`:hl7apy `
+          --collect-all=hl7apy `
+          --clean `
+          main.py
 
       # ---------------- LINUX ----------------
       - name: Build binary (Linux)
