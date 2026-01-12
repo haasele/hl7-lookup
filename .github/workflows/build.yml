@@ -40,10 +40,10 @@ jobs:
             --noconsole `
             --onefile `
             --clean `
-            --icon=hl7.ico `
-            --add-data "$hl7path;hl7apy" `
-            --add-data "stylesheet.qss;." `
-            --add-data "hl7.ico;." `
+            --hidden-import PySide6 `
+            --add-data "$hl7path:hl7apy" `
+            --add-data "stylesheet.qss:." `
+            --add-data "hl7.ico:." `
             main.py
 
       # ---------------- LINUX ----------------
@@ -54,6 +54,7 @@ jobs:
             --noconsole \
             --onefile \
             --clean \
+            --hidden-import PySide6 \
             --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
             --add-data "stylesheet.qss:." \
             --add-data "hl7.ico:." \
@@ -68,6 +69,7 @@ jobs:
             --onefile \
             --clean \
             --icon=hl7.ico \
+            --hidden-import PySide6 \
             --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
             --add-data "stylesheet.qss:." \
             --add-data "hl7.ico:." \
