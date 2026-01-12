@@ -39,7 +39,7 @@ jobs:
           # PyInstaller aufrufen
             pyinstaller `
           --windowed `
-          --onedir `
+          --onefile `
           --name HL7-Lookup `
           --noconsole `
           --collect-all PySide6 `
