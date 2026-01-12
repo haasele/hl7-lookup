@@ -36,45 +36,21 @@ jobs:
           $hl7path = python -c "import hl7apy, os; print(os.path.dirname(hl7apy.__file__))"
           
           # PyInstaller aufrufen
-          pyinstaller `
-            --noconsole `
-            --onedir `
-            --clean `
-            --hidden-import PySide6 `
-            --add-data "$hl7path:hl7apy" `
-            --add-data "stylesheet.qss:." `
-            --add-data "hl7.ico:." `
-            main.py
+          pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "$hl7path:hl7apy" --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
+
 
       # ---------------- LINUX ----------------
       - name: Build binary (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pyinstaller \
-            --noconsole \
-            --onefile \
-            --clean \
-            --hidden-import PySide6 \
-            --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
-            --add-data "stylesheet.qss:." \
-            --add-data "hl7.ico:." \
-            main.py
+          pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
 
 
       # ---------------- MACOS ----------------
       - name: Build binary (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          pyinstaller \
-            --noconsole \
-            --onedir \
-            --clean \
-            --icon=hl7.ico \
-            --hidden-import PySide6 \
-            --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
-            --add-data "stylesheet.qss:." \
-            --add-data "hl7.ico:." \
-            main.py
+          pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
