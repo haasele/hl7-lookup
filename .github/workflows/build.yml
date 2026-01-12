@@ -32,15 +32,17 @@ jobs:
       - name: Build binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
+          $hl7path = python -c "import hl7apy, os; print(os.path.dirname(hl7apy.__file__)))"
           pyinstaller `
             --noconsole `
             --onefile `
             --clean `
             --icon=hl7.ico `
-            --add-data "$env:APPDATA\Python\Python313\site-packages\hl7apy;hl7apy" `
+            --add-data "$hl7path;hl7apy" `
             --add-data "stylesheet.qss;." `
             --add-data "hl7.ico;." `
             main.py
+
 
 
       # ---------------- LINUX ----------------
