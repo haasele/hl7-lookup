@@ -535,7 +535,7 @@ class HL7Tab(QWidget):
 class HL7Viewer(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("HL7 Parser Lookup")
+        self.setWindowTitle("HL7 Lookup")
         self.setMinimumSize(1500, 650)
 
         self.tabs = QTabWidget()
