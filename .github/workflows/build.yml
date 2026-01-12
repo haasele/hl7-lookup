@@ -1,0 +1,76 @@
+name: Build binaries (Windows, Linux, macOS)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ---------------- WINDOWS ----------------
+      - name: Build binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          pyinstaller ^
+            --noconsole ^
+            --onefile ^
+            --clean ^
+            --icon=hl7.ico ^
+            --add-data "%APPDATA%\Python\Python313\site-packages\hl7apy;hl7apy" ^
+            --add-data "stylesheet.qss;." ^
+            --add-data "hl7.ico;." ^
+            main.py
+
+      # ---------------- LINUX ----------------
+      - name: Build binary (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          pyinstaller \
+            --noconsole \
+            --onefile \
+            --clean \
+            --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
+            --add-data "stylesheet.qss:." \
+            --add-data "hl7.ico:." \
+            main.py
+
+      # ---------------- MACOS ----------------
+      - name: Build binary (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          pyinstaller \
+            --noconsole \
+            --onefile \
+            --clean \
+            --icon=hl7.ico \
+            --add-data "$(python -c 'import hl7apy, os; print(os.path.dirname(hl7apy.__file__))'):hl7apy" \
+            --add-data "stylesheet.qss:." \
+            --add-data "hl7.ico:." \
+            main.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}
+          path: dist/*
