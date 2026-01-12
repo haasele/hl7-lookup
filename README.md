@@ -39,6 +39,6 @@ And cd into that Directory
 
 Then paste the following string in your terminal (you need pyinstall for this to work, install it with `pip install pyinstaller`)
 ```
-pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy main.py
+pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "/Users/rabbit/Desktop/Archive2/hl7-lookup/stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
 ```
-Currently the Stylesheet doesn`t seem to work in the package Binary, running it directly via python 3 main.py fixes it
+
