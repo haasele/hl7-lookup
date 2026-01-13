@@ -54,15 +54,7 @@ jobs:
           --collect-all=hl7apy `
           --clean `
           main.py
-          
-      - name: Upload Windows packages
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-packages
-          path: |
-            dist/HL7-Lookup
-            
+          cp dist/HL7-Looku* build-artifacts/HL7-Lookup/windows
       # ---------------- LINUX ----------------
       
       - name: Build binary (Linux)
@@ -71,16 +63,11 @@ jobs:
           pyinstaller --windowed --name HL7-Lookup --noconsole --onefile --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
           mkdir -p build/linux
           cp dist/HL7-Lookup build/linux/hl7-lookup
+          cp dist/HL7-Lookup build-artifacts/linux/
           chmod +x build/linux/hl7-lookup
+          chmod +x build-artifacts/linux/hl7-lookup
           sudo apt-get update
 
-      - name: Upload Linux packages
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-packages
-          path: |
-            build-artifacts/linux/
           
       # ---------------- MACOS ----------------
       
@@ -92,13 +79,6 @@ jobs:
           mkdir -p build-artifacts/macos
           cp -r dist/HL7-Lookup build-artifacts/macos/
 
-      - name: Upload MacOS packages
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-packages
-          path: |
-            build-artifacts/macos/
           
       # ---------------- Install Packaging Tools ----------------
       - name: Install packaging tools (Linux)
@@ -193,3 +173,9 @@ jobs:
           name: AppImage-packages
           path: |
             *.AppImage
+            
+      - name: Upload OS build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: build-artifacts/
