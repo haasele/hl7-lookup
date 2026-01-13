@@ -1,5 +1,8 @@
 name: Build binaries (Windows, Linux, macOS)
 
+env:
+  VERSION: ${{ github.sha }}
+  
 on:
   push:
     branches: [ main ]
@@ -52,16 +55,14 @@ jobs:
           --clean `
           main.py
           
-          mkdir -p build-artifacts/windows
-          copy dist\HL7-Lookup.exe build-artifacts\windows\
       # ---------------- LINUX ----------------
       - name: Build binary (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           pyinstaller --windowed --name HL7-Lookup --noconsole --onefile --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
-
-          mkdir -p build-artifacts/linux
-          cp dist/HL7-Lookup build-artifacts/linux/main
+          mkdir -p build/linux
+          cp dist/HL7-Lookup build/linux/hl7-lookup
+          chmod +x build/linux/hl7-lookup
           
       # ---------------- MACOS ----------------
       - name: Build binary (macOS)
@@ -71,7 +72,77 @@ jobs:
           
           mkdir -p build-artifacts/macos
           cp -r dist/HL7-Lookup build-artifacts/macos/
-          
+
+      - name: Install packaging tools (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            fakeroot dpkg-dev rpm \
+            xorriso squashfs-tools \
+            wget ruby ruby-dev build-essential
+          sudo gem install --no-document fpm
+
+      - name: Build .deb
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p package/usr/local/bin
+          mkdir -p package/DEBIAN
+      
+          cp build/linux/hl7-lookup package/usr/local/bin/hl7-lookup
+      
+          cat <<EOF > package/DEBIAN/control
+          Package: hl7-lookup
+          Version: ${VERSION}
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Your Name <you@example.com>
+          Description: HL7 Lookup Tool
+          EOF
+      
+          dpkg-deb --build package hl7-lookup_${VERSION}_amd64.deb
+
+      - name: Build .rpm
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          fpm -s dir -t rpm \
+            -n hl7-lookup \
+            -v ${VERSION} \
+            -C package \
+            usr/local/bin/hl7-lookup
+
+      - name: Build AppImage
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          wget -O appimagetool \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+      
+          mkdir -p hl7_lookup.AppDir/usr/bin
+          cp build/linux/hl7-lookup hl7_lookup.AppDir/usr/bin/hl7-lookup
+      
+          cat <<EOF > hl7_lookup.AppDir/hl7_lookup.desktop
+          [Desktop Entry]
+          Name=HL7 Lookup
+          Exec=hl7-lookup
+          Type=Application
+          Categories=Utility;
+          EOF
+      
+          ./appimagetool hl7_lookup.AppDir hl7-lookup-${VERSION}-x86_64.AppImage
+
+      - name: Upload Linux packages
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: |
+            hl7-lookup_${VERSION}_amd64.deb
+            *.rpm
+            hl7-lookup-${VERSION}-x86_64.AppImage
+
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
