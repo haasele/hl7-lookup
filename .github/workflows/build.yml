@@ -54,7 +54,9 @@ jobs:
           --collect-all=hl7apy `
           --clean `
           main.py
-          cp dist/HL7-Looku* build-artifacts/HL7-Lookup/windows
+          mkdir build-artifacts\HL7-Lookup\windows
+          cp dist\HL7-Lookup.exe build-artifacts\HL7-Lookup\windows\
+
       # ---------------- LINUX ----------------
       
       - name: Build binary (Linux)
