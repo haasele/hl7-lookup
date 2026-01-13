@@ -130,7 +130,7 @@ jobs:
           Name=HL7 Lookup
           Exec=hl7-lookup
           Type=Application
-          Icon=hl7.png
+          Icon=hl7
           Categories=Utility;
           EOF
 
