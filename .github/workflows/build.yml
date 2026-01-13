@@ -89,9 +89,9 @@ jobs:
         run: |
           mkdir -p package/usr/local/bin
           mkdir -p package/DEBIAN
-      
+
           cp build/linux/hl7-lookup package/usr/local/bin/hl7-lookup
-      
+
           cat <<EOF > package/DEBIAN/control
           Package: hl7-lookup
           Version: 1.0.0
@@ -101,7 +101,7 @@ jobs:
           Maintainer: haasele
           Description: HL7 Lookup Tool
           EOF
-      
+
           dpkg-deb --build package hl7-lookup_${VERSION}_amd64.deb
 
       - name: Build .rpm
@@ -120,18 +120,20 @@ jobs:
           wget -O appimagetool \
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool
-      
+
           mkdir -p hl7_lookup.AppDir/usr/bin
           cp build/linux/hl7-lookup hl7_lookup.AppDir/usr/bin/hl7-lookup
-      
+          cp hl7.png hl7_lookup.AppDir/
+
           cat <<EOF > hl7_lookup.AppDir/hl7_lookup.desktop
           [Desktop Entry]
           Name=HL7 Lookup
           Exec=hl7-lookup
           Type=Application
+          Icon=hl7.png
           Categories=Utility;
           EOF
-      
+
           ./appimagetool hl7_lookup.AppDir hl7-lookup-${VERSION}-x86_64.AppImage
 
       - name: Upload Linux packages
