@@ -126,33 +126,49 @@ jobs:
             -v 1.0.0 \
             -C package \
             usr/local/bin/HL7-Lookup
-            
-      # ---------------- Build AppImage ----------------
+
       
+# ---------------- Build AppImage ----------------
       - name: Build AppImage
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt-get update
           sudo apt-get install -y fuse libfuse2 xorriso squashfs-tools
+      
           wget -O appimagetool \
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool
-
+      
           mkdir -p HL7-Lookup.AppDir/usr/bin
           mkdir -p HL7-Lookup.AppDir/usr/share/icons/hicolor/256x256/apps
+      
           cp build/linux/HL7-Lookup HL7-Lookup.AppDir/usr/bin/HL7-Lookup
+          chmod +x HL7-Lookup.AppDir/usr/bin/HL7-Lookup
+      
           cp hl7.png HL7-Lookup.AppDir/usr/share/icons/hicolor/256x256/apps/hl7.png
           cp hl7.png HL7-Lookup.AppDir/
-
+      
+          # AppRun (wichtig für AppImage)
+          cat <<EOF > HL7-Lookup.AppDir/AppRun
+          #!/bin/sh
+          exec "\$APPDIR/usr/bin/HL7-Lookup"
+          EOF
+          chmod +x HL7-Lookup.AppDir/AppRun
+      
+          # Desktop Entry
           cat <<EOF > HL7-Lookup.AppDir/HL7-Lookup.desktop
           [Desktop Entry]
+          Type=Application
           Name=HL7 Lookup
           Exec=HL7-Lookup
-          Type=Application
           Icon=hl7
           Categories=Utility;
           EOF
-
-          ./appimagetool HL7-Lookup.AppDir HL7-Lookup-${VERSION}-x86_64.AppImage
+      
+          # FUSE-freier AppImage-Build (wichtig!)
+          APPIMAGE_EXTRACT_AND_RUN=1 ./appimagetool \
+            HL7-Lookup.AppDir \
+            HL7-Lookup-${VERSION}-x86_64.AppImage
 
       - name: Upload Debian packages
         if: matrix.os == 'ubuntu-latest'
