@@ -6,7 +6,7 @@ A simple and extendable HL7 Parser for v2.5
 ---
 
 ## Prerequisites
-- Python -> officially tested on Python 3.13
+- Python -> officially tested on Python 3.12
 - (optional) -> Pyinstall
 
 ## How do I run it?
