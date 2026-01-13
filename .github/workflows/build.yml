@@ -137,7 +137,7 @@ jobs:
 
           mkdir -p HL7-Lookup.AppDir/usr/bin
           mkdir -p HL7-Lookup.AppDir/usr/share/icons/hicolor/256x256/apps
-          cp build/linux/HL7-Lookup hl7_lookup.AppDir/usr/bin/HL7-Lookup
+          cp build/linux/HL7-Lookup HL7-Lookup.AppDir/usr/bin/HL7-Lookup
           cp hl7.png HL7-Lookup.AppDir/usr/share/icons/hicolor/256x256/apps/hl7.png
           cp hl7.png HL7-Lookup.AppDir/
 
