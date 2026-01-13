@@ -63,6 +63,7 @@ jobs:
           mkdir -p build/linux
           cp dist/HL7-Lookup build/linux/hl7-lookup
           chmod +x build/linux/hl7-lookup
+          sudo apt-get update
           
       # ---------------- MACOS ----------------
       - name: Build binary (macOS)
@@ -115,6 +116,7 @@ jobs:
       - name: Build AppImage
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt-get install -y fuse libfuse2 xorriso squashfs-tools
           wget -O appimagetool \
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool
