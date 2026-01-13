@@ -72,8 +72,8 @@ jobs:
           mkdir -p build-artifacts/macos
           cp -r dist/HL7-Lookup build-artifacts/macos/
           
-      - name: Upload artifact
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binary-${{ matrix.os }}
-          path: dist/*
+          name: build-artifacts-${{ matrix.os }}
+          path: build-artifacts/
