@@ -93,11 +93,11 @@ jobs:
       
           cat <<EOF > package/DEBIAN/control
           Package: hl7-lookup
-          Version: ${VERSION}
+          Version: 1.0.0
           Section: utils
           Priority: optional
           Architecture: amd64
-          Maintainer: Your Name <you@example.com>
+          Maintainer: haasele
           Description: HL7 Lookup Tool
           EOF
       
@@ -108,7 +108,7 @@ jobs:
         run: |
           fpm -s dir -t rpm \
             -n hl7-lookup \
-            -v ${VERSION} \
+            -v 1.0.0 \
             -C package \
             usr/local/bin/hl7-lookup
 
@@ -138,9 +138,9 @@ jobs:
         with:
           name: linux-packages
           path: |
-            hl7-lookup_${VERSION}_amd64.deb
+            hl7-lookup_amd64.deb
             *.rpm
-            hl7-lookup-${VERSION}-x86_64.AppImage
+            hl7-lookup-x86_64.AppImage
 
 
       - name: Upload build artifacts
