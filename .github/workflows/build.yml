@@ -33,6 +33,7 @@ jobs:
           pip install PySide6
 
       # ---------------- WINDOWS ----------------
+      
       - name: Build binary (Windows)
         if: matrix.os == 'windows-latest'
         run: |
@@ -45,7 +46,6 @@ jobs:
           --onefile `
           --name HL7-Lookup `
           --noconsole `
-#          --collect-all PySide6 `
           --icon=hl7.ico `
           --add-data=stylesheet.qss:. `
           --add-data=hl7.ico:. `
