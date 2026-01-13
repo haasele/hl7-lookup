@@ -45,7 +45,7 @@ jobs:
           --onefile `
           --name HL7-Lookup `
           --noconsole `
-          --collect-all PySide6 `
+#          --collect-all PySide6 `
           --icon=hl7.ico `
           --add-data=stylesheet.qss:. `
           --add-data=hl7.ico:. `
@@ -60,7 +60,7 @@ jobs:
       - name: Build binary (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          pyinstaller --windowed --name HL7-Lookup --noconsole --onefile --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
+          pyinstaller --windowed --name HL7-Lookup --noconsole --onefile --icon=hl7.ico --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
           mkdir -p build/linux
           mkdir -p build-artifacts/linux/
           cp dist/HL7-Lookup build/linux/
@@ -100,10 +100,10 @@ jobs:
           mkdir -p package/usr/local/bin
           mkdir -p package/DEBIAN
 
-          cp build/linux/hl7-lookup package/usr/local/bin/hl7-lookup
+          cp build/linux/HL7-Lookup package/usr/local/bin/HL7-Lookup
 
           cat <<EOF > package/DEBIAN/control
-          Package: hl7-lookup
+          Package: HL7-Lookup
           Version: 1.0.0
           Section: utils
           Priority: optional
@@ -112,7 +112,7 @@ jobs:
           Description: HL7 Lookup Tool
           EOF
 
-          dpkg-deb --build package hl7-lookup_${VERSION}_amd64.deb
+          dpkg-deb --build package HL7-Lookup_${VERSION}_amd64.deb
           
       # ---------------- Build RPM Package ----------------
       
@@ -120,10 +120,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           fpm -s dir -t rpm \
-            -n hl7-lookup \
+            -n HL7-Lookup \
             -v 1.0.0 \
             -C package \
-            usr/local/bin/hl7-lookup
+            usr/local/bin/HL7-Lookup
             
       # ---------------- Build AppImage ----------------
       
@@ -135,22 +135,22 @@ jobs:
             https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x appimagetool
 
-          mkdir -p hl7_lookup.AppDir/usr/bin
-          mkdir -p hl7_lookup.AppDir/usr/share/icons/hicolor/256x256/apps
-          cp build/linux/hl7-lookup hl7_lookup.AppDir/usr/bin/hl7-lookup
-          cp hl7.png hl7_lookup.AppDir/usr/share/icons/hicolor/256x256/apps/hl7.png
-          cp hl7.png hl7_lookup.AppDir/
+          mkdir -p HL7-Lookup.AppDir/usr/bin
+          mkdir -p HL7-Lookup.AppDir/usr/share/icons/hicolor/256x256/apps
+          cp build/linux/HL7-Lookup hl7_lookup.AppDir/usr/bin/HL7-Lookup
+          cp hl7.png HL7-Lookup.AppDir/usr/share/icons/hicolor/256x256/apps/hl7.png
+          cp hl7.png HL7-Lookup.AppDir/
 
-          cat <<EOF > hl7_lookup.AppDir/hl7_lookup.desktop
+          cat <<EOF > HL7-Lookup.AppDir/HL7-Lookup.desktop
           [Desktop Entry]
           Name=HL7 Lookup
-          Exec=hl7-lookup
+          Exec=HL7-Lookup
           Type=Application
           Icon=hl7
           Categories=Utility;
           EOF
 
-          ./appimagetool hl7_lookup.AppDir hl7-lookup-${VERSION}-x86_64.AppImage
+          ./appimagetool HL7-Lookup.AppDir HL7-Lookup-${VERSION}-x86_64.AppImage
 
       - name: Upload Debian packages
         if: matrix.os == 'ubuntu-latest'
