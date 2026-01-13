@@ -1,6 +1,5 @@
 name: Package Linux Artifacts
 
-# Manual trigger
 on:
   workflow_dispatch:
     inputs:
@@ -11,19 +10,21 @@ on:
 
 jobs:
   package-linux:
-    name: Package Linux Artifacts
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Download build artifacts
-        # Assuming you have previously uploaded them manually or store in repo
+      - name: Download Linux build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-ubuntu-latest
+          path: build-artifacts
+
+      - name: Verify binary
         run: |
-          echo "Please place the Linux build in ./build-artifacts/linux/main"
-          mkdir -p build-artifacts/linux
-          # If using artifacts from previous workflow, you would need an extra step here
+          ls -lah build-artifacts/linux
+          file build-artifacts/linux/main
 
       - name: Install packaging tools
         run: |
@@ -31,11 +32,11 @@ jobs:
           sudo apt-get install -y fakeroot dpkg-dev rpm xorriso squashfs-tools wget ruby ruby-dev build-essential
           sudo gem install --no-document fpm
 
-      - name: Prepare packaging directories
+      - name: Prepare package layout
         run: |
           mkdir -p package/usr/local/bin
-          cp ./build-artifacts/linux/main package/usr/local/bin/hl7_lookup
-          chmod +x package/usr/local/bin/hl7_lookup
+          cp build-artifacts/linux/main package/usr/local/bin/hl7-lookup
+          chmod +x package/usr/local/bin/hl7-lookup
 
       #####################
       # Build DEB package #
@@ -59,24 +60,31 @@ jobs:
       #####################
       - name: Build .rpm
         run: |
-          fpm -s dir -t rpm -n hl7-lookup -v ${{ github.event.inputs.version }} -C package usr/local/bin/hl7_lookup
+          fpm -s dir -t rpm \
+            -n hl7-lookup \
+            -v ${{ github.event.inputs.version }} \
+            -C package usr/local/bin/hl7-lookup
 
       ##########################
       # Build AppImage package #
       ##########################
       - name: Build AppImage
         run: |
-          wget "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-          chmod +x appimagetool-x86_64.AppImage
+          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+
           mkdir -p hl7_lookup.AppDir/usr/bin
-          cp ./build-artifacts/linux/main hl7_lookup.AppDir/usr/bin/hl7_lookup
-          echo "[Desktop Entry]
+          cp build-artifacts/linux/main hl7_lookup.AppDir/usr/bin/hl7-lookup
+
+          cat <<EOF > hl7_lookup.AppDir/hl7_lookup.desktop
+          [Desktop Entry]
           Name=HL7 Lookup
-          Exec=hl7_lookup
-          Icon=hl7
+          Exec=hl7-lookup
           Type=Application
-          Categories=Utility;" > hl7_lookup.AppDir/hl7_lookup.desktop
-          ./appimagetool-x86_64.AppImage hl7_lookup.AppDir hl7-lookup-${{ github.event.inputs.version }}-x86_64.AppImage
+          Categories=Utility;
+          EOF
+
+          ./appimagetool hl7_lookup.AppDir hl7-lookup-${{ github.event.inputs.version }}-x86_64.AppImage
 
       - name: Upload packaged artifacts
         uses: actions/upload-artifact@v4
@@ -84,5 +92,5 @@ jobs:
           name: linux-packages
           path: |
             hl7-lookup_${{ github.event.inputs.version }}_amd64.deb
-            hl7-lookup-${{ github.event.inputs.version }}-x86_64.AppImage
             *.rpm
+            hl7-lookup-${{ github.event.inputs.version }}-x86_64.AppImage
