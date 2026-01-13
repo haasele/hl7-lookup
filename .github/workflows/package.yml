@@ -1,0 +1,91 @@
+name: Package Linux Artifacts
+
+# Trigger this workflow when the 'build.yaml' workflow completes successfully
+on:
+  workflow_run:
+    workflows: ["Build binaries (Windows, Linux, macOS)"] # <-- The name of your existing build workflow
+    types:
+      - completed
+
+jobs:
+  package-linux:
+    name: Package Linux Artifacts
+    runs-on: ubuntu-latest
+
+    # Only continue if the previous workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download build artifacts from previous workflow
+        uses: actions/download-artifact@v3
+        with:
+          workflow: Build Workflow
+          path: ./build-artifacts
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot dpkg-dev rpm xorriso squashfs-tools wget
+
+      - name: Prepare packaging directories
+        run: |
+          mkdir -p package/usr/local/bin
+          cp ./build-artifacts/linux/main package/usr/local/bin/hl7_lookup
+          chmod +x package/usr/local/bin/hl7_lookup
+
+      #####################
+      # Build DEB package #
+      #####################
+      - name: Build .deb
+        run: |
+          mkdir -p package/DEBIAN
+          cat <<EOF > package/DEBIAN/control
+          Package: hl7-lookup
+          Version: 1.0.0
+          Section: utils
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Your Name <you@example.com>
+          Description: HL7 Lookup Tool
+          EOF
+          dpkg-deb --build package hl7-lookup_1.0.0_amd64.deb
+
+      #####################
+      # Build RPM package #
+      #####################
+      - name: Build .rpm
+        run: |
+          mkdir -p rpm_build/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          fpm -s dir -t rpm -n hl7-lookup -v 1.0.0 -C package usr/local/bin/hl7_lookup
+
+      ##########################
+      # Build AppImage package #
+      ##########################
+      - name: Build AppImage
+        run: |
+          # Download AppImage tools
+          wget "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool-x86_64.AppImage
+          # Create AppDir structure
+          mkdir -p hl7_lookup.AppDir/usr/bin
+          cp ./build-artifacts/linux/main hl7_lookup.AppDir/usr/bin/hl7_lookup
+          echo "[Desktop Entry]
+          Name=HL7 Lookup
+          Exec=hl7_lookup
+          Icon=hl7
+          Type=Application
+          Categories=Utility;" > hl7_lookup.AppDir/hl7_lookup.desktop
+          # Build AppImage
+          ./appimagetool-x86_64.AppImage hl7_lookup.AppDir hl7-lookup-1.0.0-x86_64.AppImage
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-packages
+          path: |
+            hl7-lookup_1.0.0_amd64.deb
+            hl7-lookup-1.0.0-x86_64.AppImage
+            *.rpm
