@@ -1,7 +1,9 @@
-# hl7-lookup
+# HL7-Lookup
 A simple and extendable HL7 Parser for v2.5
+---
+<img width="1584" height="396" alt="HL7-Lookup_Banner" src="https://github.com/user-attachments/assets/433a78ac-ac77-4186-8772-ed4bd3d785f5" />
 
-<img width="1910" height="1008" alt="image" src="https://github.com/user-attachments/assets/5607296d-36f8-457b-a365-4d0f464572b8" />
+---
 
 ## Prerequisites
 - Python -> officially tested on Python 3.13
@@ -44,3 +46,9 @@ Then paste the following string in your terminal (you need pyinstall for this to
 pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "/Users/rabbit/Desktop/Archive2/hl7-lookup/stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
 ```
 
+## Screenshots
+<img width="1910" height="1008" alt="image" src="https://github.com/user-attachments/assets/5607296d-36f8-457b-a365-4d0f464572b8" />
+<img width="1916" height="1011" alt="image" src="https://github.com/user-attachments/assets/45f6e8a1-7ad2-4116-b8a7-3e24be05f5ad" />
+<img width="1014" height="511" alt="image" src="https://github.com/user-attachments/assets/2066ac49-5f7b-43a1-aa87-4a9448c07384" />
+
+### Have fun!
