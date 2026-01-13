@@ -1,10 +1,10 @@
 name: Build binaries (Windows, Linux, macOS)
 
-# on:
-#   push:
-#     branches: [ main ]
-#   pull_request:
-#     branches: [ main ]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -51,20 +51,27 @@ jobs:
           --collect-all=hl7apy `
           --clean `
           main.py
-
+          
+          mkdir -p build-artifacts/windows
+          copy dist\HL7-Lookup.exe build-artifacts\windows\
       # ---------------- LINUX ----------------
       - name: Build binary (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           pyinstaller --windowed --name HL7-Lookup --noconsole --onefile --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
 
-
+          mkdir -p build-artifacts/linux
+          cp dist/HL7-Lookup build-artifacts/linux/main
+          
       # ---------------- MACOS ----------------
       - name: Build binary (macOS)
         if: matrix.os == 'macos-latest'
         run: |
           pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
-
+          
+          mkdir -p build-artifacts/macos
+          cp -r dist/HL7-Lookup build-artifacts/macos/
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
