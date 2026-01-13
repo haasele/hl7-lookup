@@ -63,10 +63,10 @@ jobs:
           pyinstaller --windowed --name HL7-Lookup --noconsole --onefile --icon=hl7.ico --collect-all PySide6 --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
           mkdir -p build/linux
           mkdir -p build-artifacts/linux/
-          cp dist/HL7-Lookup build/linux/hl7-lookup
+          cp dist/HL7-Lookup build/linux/
           cp dist/HL7-Lookup build-artifacts/linux/
-          chmod +x build/linux/hl7-lookup
-          chmod +x build-artifacts/linux/hl7-lookup
+          chmod +x build/linux/HL7-Lookup
+          chmod +x build-artifacts/linux/HL7-Lookup
           sudo apt-get update
 
           
