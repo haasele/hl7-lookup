@@ -1,0 +1,31 @@
+product: jvm/app
+
+dependencies:
+  - ../shared
+  - $compose.desktop.currentOs
+  - ca.uhn.hapi:hapi-base:2.6.0
+  - ca.uhn.hapi:hapi-structures-v21:2.6.0
+  - ca.uhn.hapi:hapi-structures-v22:2.6.0
+  - ca.uhn.hapi:hapi-structures-v23:2.6.0
+  - ca.uhn.hapi:hapi-structures-v231:2.6.0
+  - ca.uhn.hapi:hapi-structures-v24:2.6.0
+  - ca.uhn.hapi:hapi-structures-v25:2.6.0
+  - ca.uhn.hapi:hapi-structures-v251:2.6.0
+  - ca.uhn.hapi:hapi-structures-v26:2.6.0
+  - ca.uhn.hapi:hapi-structures-v27:2.6.0
+  - ca.uhn.hapi:hapi-structures-v28:2.6.0
+  - ca.uhn.hapi:hapi-structures-v281:2.6.0
+  - org.slf4j:slf4j-nop:1.7.36
+  - org.jetbrains.skiko:skiko-js-wasm-runtime:0.9.37.4
+
+test-dependencies:
+  - org.jetbrains.kotlin:kotlin-test:2.3.21
+
+settings:
+  compose:
+    enabled: true
+  kotlin:
+    serialization: json
+    optIns: [kotlin.time.ExperimentalTime]
+  jvm:
+    mainClass: hl7lookup.desktop.window.IndexKt

@@ -1,0 +1,11 @@
+product: wasm-js/app
+
+dependencies:
+  - ../shared
+
+settings:
+  compose:
+    enabled: true
+  kotlin:
+    serialization: json
+    optIns: [kotlin.time.ExperimentalTime, kotlin.js.ExperimentalWasmJsInterop]

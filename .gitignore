@@ -1,0 +1,16 @@
+.idea/
+*.iml
+.venv/
+__pycache__/
+*.py[cod]
+
+build/
+.kotlin/
+dist/
+*.spec
+build-artifacts/
+package/
+HL7-Lookup.AppDir/
+*.deb
+*.rpm
+*.AppImage
