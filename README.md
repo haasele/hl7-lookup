@@ -1,54 +1,48 @@
-# HL7-Lookup
-A simple and extendable HL7 Parser for v2.5
----
-<img width="1584" height="396" alt="HL7-Lookup_Banner" src="https://github.com/user-attachments/assets/433a78ac-ac77-4186-8772-ed4bd3d785f5" />
+# HL7 Lookup
 
----
+A workspace for HL7 v2. The same screen runs as a desktop window and in the browser. Both talk to one engine: HAPI on the JVM parses, validates, builds acknowledgements and serves the message definitions. The browser is a WebAssembly client of that engine.
 
-## Prerequisites
-- Python -> officially tested on Python 3.12
-- (optional) -> Pyinstall
+## Run the desktop window
 
-## How do I run it?
-
-### Widows
-Just clone the repo, navigate into it via terminal and Start it with
+The repository carries the [Kotlin toolchain](https://github.com/JetBrains/kotlin) wrapper (`kotlin` on macOS and Linux, `kotlin.bat` on Windows). The first run downloads the toolchain and a JDK.
 
 ```
-python.exe main.py
+./kotlin run -m desktop
 ```
 
+The window also listens on `http://127.0.0.1:7780/` and serves the browser client from the last web build. `--port` changes the port. `--no-server` starts the window without the listener.
 
-### Linux
-Clone the repo, navigate into it via terminal and Start it with
+## Run the browser
 
-```
-python3 main.py
-```
-
-
-# Can I build an Executable out of it? (Windows/MacOS)
-
-Yes! for this to work, you should use pyinstaller, below is an example syntax that works on Windows - You will still need to cange to your specific python Version, you need to install hl7apy `pip install hl7apy` and pyinstaller `pip install pyinstaller`
+Build the web client, then start the engine headless:
 
 ```
-C:\Users\[Your-User]\AppData\Roaming\Python\Python313\Scripts\pyinstaller.exe --noconsole --onefile --add-data "C:\Users\[Your-User]\AppData\Roaming\Python\Python313\site-packages\hl7apy:hl7apy" --icon=hl7.ico --add-data "stylesheet.qss:." --add-data "hl7.ico:." --clean main.py
+./kotlin build -m web
+./kotlin run -m desktop -- --server
 ```
 
-On Macos, clone the repo with
-```
-git clone https://github.com/haasele/hl7-lookup
-```
-And cd into that Directory
+Open `http://127.0.0.1:7780/`. Validation, acknowledgements, new messages and MLLP/HTTP stay in the desktop process. The page only works while that process is running.
 
-Then paste the following string in your terminal (you need pyinstall for this to work, install it with `pip install pyinstaller`)
+## Check the build
+
 ```
-pyinstaller --windowed --name HL7-Lookup --noconsole --onedir --icon=hl7.ico --add-data "/Users/rabbit/Desktop/Archive2/hl7-lookup/stylesheet.qss:." --add-data "hl7.ico:." --clean --collect-all hl7apy --add-data "SourceCodePro-Light.ttf:." main.py
+./kotlin test -m desktop
+./kotlin build
 ```
 
-## Screenshots
-<img width="1910" height="1008" alt="image" src="https://github.com/user-attachments/assets/5607296d-36f8-457b-a365-4d0f464572b8" />
-<img width="1916" height="1011" alt="image" src="https://github.com/user-attachments/assets/45f6e8a1-7ad2-4116-b8a7-3e24be05f5ad" />
-<img width="1014" height="511" alt="image" src="https://github.com/user-attachments/assets/2066ac49-5f7b-43a1-aa87-4a9448c07384" />
+## What the workspace does
 
-### Have fun!
+One document is a tab. The screen has the interpretation, the raw message and the field grid, kept on the same field. Under that are the message list, senders, receivers, integrations and acknowledgements, plus field statistics and validation.
+
+- Open, paste, save and download messages, and create one from a message type
+- Sample messages for ADT, ORM, ORU, MDM, SIU, REF, VXU and ACK
+- Search across every open message
+- Delimiters, repetitions, components, local dates and table lists in the raw text
+- Field grid with empty fields hidden, suggestions and a calendar
+- Filters, highlighting and a field-by-field comparison
+- Validation down to the subcomponent, shown in every view
+- Anonymisation of PID, NK1, GT1, IN1 and MRG, free text in NTE and OBX, and a stable date shift
+- Interface definitions with required fields, expected values, dates, tables and highlights, imported and exported as JSON
+- MLLP and HTTP senders and receivers, acknowledgement list, and a connection test
+
+The session holds the messages you have open.

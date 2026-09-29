@@ -1,0 +1,4 @@
+modules:
+  - desktop
+  - shared
+  - web
