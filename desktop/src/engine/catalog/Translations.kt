@@ -1,0 +1,42 @@
+package hl7lookup.desktop.engine.catalog
+
+internal val segmentDescriptions: Map<String, String> = mapOf(
+    "ACC" to "Accident", "ADD" to "Addendum", "AIG" to "Appointment Information - General Resource",
+    "AIL" to "Appointment Information - Location Resource", "AIP" to "Appointment Information - Personnel Resource",
+    "AIS" to "Appointment Information", "AL1" to "Patient Allergy Information", "APR" to "Appointment Preferences",
+    "ARQ" to "Appointment Request", "BHS" to "Batch Header", "BTS" to "Batch Trailer", "CON" to "Consent Segment",
+    "CTD" to "Contact Data", "CTI" to "Clinical Trial Identification", "DB1" to "Disability", "DG1" to "Diagnosis",
+    "DRG" to "Diagnosis Related Group", "DSC" to "Continuation Pointer", "ERR" to "Error", "EVN" to "Event Type",
+    "FHS" to "File Header", "FT1" to "Financial Transaction", "FTS" to "File Trailer", "GT1" to "Guarantor",
+    "IAM" to "Patient Adverse Reaction Information", "IN1" to "Insurance", "IN2" to "Insurance Additional Information",
+    "IN3" to "Insurance Additional Information, Certification", "MFE" to "Master File Entry", "MFI" to "Master File Identification",
+    "MRG" to "Merge Patient Information", "MSA" to "Message Acknowledgment", "MSH" to "Message Header", "NK1" to "Next of Kin / Associated Parties",
+    "NPU" to "Bed Status Update", "NTE" to "Notes and Comments", "OBR" to "Observation Request", "OBX" to "Observation/Result",
+    "ORC" to "Common Order", "PD1" to "Patient Additional Demographic", "PDA" to "Patient Death and Autopsy",
+    "PID" to "Patient Identification", "PR1" to "Procedures", "PRA" to "Practitioner Detail", "PRD" to "Provider Data",
+    "PV1" to "Patient Visit", "PV2" to "Patient Visit - Additional Information", "QAK" to "Query Acknowledgment",
+    "QPD" to "Query Parameter Definition", "QRD" to "Original-Style Query Definition", "QRF" to "Original-Style Query Filter",
+    "RCP" to "Response Control Parameter", "RF1" to "Referral Information", "RGS" to "Resource Group",
+    "ROL" to "Role", "RXA" to "Pharmacy/Treatment Administration", "RXC" to "Pharmacy/Treatment Component Order",
+    "RXE" to "Pharmacy/Treatment Encoded Order", "RXO" to "Pharmacy/Treatment Order", "RXR" to "Pharmacy/Treatment Route",
+    "SCH" to "Scheduling Activity Information", "SFT" to "Software Segment", "SPM" to "Specimen", "TQ1" to "Timing/Quantity",
+    "TQ2" to "Timing/Quantity Relationship", "TXA" to "Transcription Document Header", "UB1" to "UB82", "UB2" to "Uniform Billing Data",
+    "ZL7" to "Local segment",
+)
+
+internal val datatypeDescriptions: Map<String, String> = mapOf(
+    "AD" to "Address", "CE" to "Coded Element", "CF" to "Coded Element with Formatted Values", "CK" to "Composite ID with Check Digit",
+    "CM" to "Composite", "CN" to "Composite ID Number and Name", "CNE" to "Coded with No Exceptions", "CP" to "Composite Price",
+    "CQ" to "Composite Quantity with Units", "CWE" to "Coded with Exceptions", "CX" to "Extended Composite ID with Check Digit",
+    "DLD" to "Discharge to Location and Date", "DLN" to "Driver's License Number", "DR" to "Date/Time Range", "DT" to "Date",
+    "DTM" to "Date/Time", "ED" to "Encapsulated Data", "EI" to "Entity Identifier", "EIP" to "Entity Identifier Pair",
+    "ERL" to "Error Location", "FC" to "Financial Class", "FN" to "Family Name", "FT" to "Formatted Text Data",
+    "HD" to "Hierarchic Designator", "ID" to "Coded Value for HL7 Defined Tables", "IS" to "Coded Value for User-Defined Tables",
+    "JCC" to "Job Code/Class", "MO" to "Money", "MOC" to "Money and Charge Code", "MSG" to "Message Type", "NM" to "Numeric",
+    "PL" to "Person Location", "PN" to "Person Name", "PPN" to "Performing Person Time Stamp", "PT" to "Processing Type",
+    "RP" to "Reference Pointer", "SAD" to "Street Address", "SI" to "Sequence ID", "SN" to "Structured Numeric",
+    "ST" to "String Data", "TM" to "Time", "TN" to "Telephone Number", "TQ" to "Timing Quantity", "TS" to "Time Stamp",
+    "TX" to "Text Data", "VID" to "Version Identifier", "XAD" to "Extended Address",
+    "XCN" to "Extended Composite ID Number and Name for Persons", "XON" to "Extended Composite Name and Identification Number for Organizations",
+    "XPN" to "Extended Person Name", "XTN" to "Extended Telecommunication Number", "varies" to "Variable Data Type",
+)
