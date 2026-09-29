@@ -42,14 +42,18 @@ if [ -z "$web_dir" ]; then
   web_dir=$(dirname "$web_mjs")
 fi
 jar=$(first_file build '*-jvm-executable.jar')
-if [ -z "$jar" ] || [ -z "$web_dir" ] || [ ! -f "$web_dir/web.mjs" ]; then
+case "$jar" in
+  ""|/*|[A-Za-z]:*) ;;
+  *) jar="$root/$jar" ;;
+esac
+if [ -z "$jar" ] || [ ! -f "$jar" ] || [ -z "$web_dir" ] || [ ! -f "$web_dir/web.mjs" ]; then
   echo "missing executable jar or web bundle (jar=$jar web=$web_dir)" >&2
   exit 1
 fi
 
 rm -rf "$stage" "$dist"
 mkdir -p "$input" "$bundles" "$stage/extract"
-(cd "$stage/extract" && jar xf "$jar")
+(cd "$stage/extract" && jar xf "$(native "$jar")")
 classes="$stage/extract/BOOT-INF/classes"
 mkdir -p "$classes"
 find "$web_dir" -maxdepth 1 -type f \( -name '*.mjs' -o -name '*.wasm' -o -name '*.js' \) -exec cp {} "$classes/" \;
