@@ -138,6 +138,7 @@ PY
     cat > "$appdir/AppRun" << EOF
 #!/bin/sh
 HERE=\$(dirname "\$(readlink -f "\$0")")
+export _JAVA_AWT_WM_NONREPARENTING=1
 exec "\$HERE/usr/lib/hl7-lookup/bin/$name" "\$@"
 EOF
     chmod +x "$appdir/AppRun"
@@ -150,6 +151,7 @@ EOF
     cp "$icon_png" "$src/hl7.png"
     cat > "$src/hl7-lookup.sh" << EOF
 #!/bin/sh
+export _JAVA_AWT_WM_NONREPARENTING=1
 exec "/app/hl7-lookup/bin/$name" "\$@"
 EOF
     chmod +x "$src/hl7-lookup.sh"

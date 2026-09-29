@@ -59,6 +59,8 @@ internal fun relaunchForWayland() {
     if (command.isEmpty()) return
     val child = ProcessBuilder(command).inheritIO().apply {
         environment()["_JAVA_AWT_WM_NONREPARENTING"] = "1"
+        // jpackage skips the cfg classpath when this token is inherited, so the relaunch would exit at once.
+        environment().remove("_JPACKAGE_LAUNCHER")
     }.start()
     kotlin.system.exitProcess(child.waitFor())
 }
