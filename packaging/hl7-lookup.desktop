@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=HL7 Lookup
+Comment=Read, edit and send HL7 v2 messages
+Exec=hl7-lookup
+Icon=hl7-lookup
+Type=Application
+Categories=Utility;
+Terminal=false

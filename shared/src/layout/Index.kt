@@ -75,12 +75,14 @@ private fun LayoutBranch(state: LayoutState, node: LayoutNode, path: String, pan
 @Composable
 private fun PaneFrame(state: LayoutState, id: String, content: @Composable () -> Unit) {
     val palette = LocalPalette.current
-    val move = PaneMove(
-        onDragStart = { state.beginDrag(id) },
-        onDrag = state::hover,
-        onDrop = state::finish,
-        onCancel = state::cancel,
-    )
+    val move = remember(state, id) {
+        PaneMove(
+            onDragStart = { state.beginDrag(id) },
+            onDrag = state::hover,
+            onDrop = state::finish,
+            onCancel = state::cancel,
+        )
+    }
     val highlight = state.dropTarget == id && state.dragging != null
     Box(
         Modifier.fillMaxSize()

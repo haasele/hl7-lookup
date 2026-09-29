@@ -1,0 +1,102 @@
+# Builds a runnable jar plus installers for Windows, macOS and Linux. Push to main or next-gen starts it, and it can be run by hand.
+name: Package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, next-gen]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: package-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build the browser client
+        run: |
+          chmod +x kotlin
+          ./kotlin build -m web
+          dir=$(find build -name web.mjs -type f -printf '%h\n' | head -1)
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+        id: web
+
+      - name: Upload the browser client
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-client
+          path: ${{ steps.web.outputs.dir }}
+          if-no-files-found: error
+
+  package:
+    name: ${{ matrix.bundle }}
+    needs: web
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            bundle: windows
+          - os: macos-latest
+            bundle: macos
+          - os: ubuntu-latest
+            bundle: linux
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up a JDK for jpackage
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Linux packaging tools
+        if: matrix.bundle == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak install -y --noninteractive flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+          curl -fsSL -o "$RUNNER_TEMP/appimagetool" https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x "$RUNNER_TEMP/appimagetool"
+          echo "APPIMAGETOOL=$RUNNER_TEMP/appimagetool" >> "$GITHUB_ENV"
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> "$GITHUB_ENV"
+
+      - name: Install the Windows icon tool
+        if: matrix.bundle == 'windows'
+        shell: bash
+        run: python -m pip install pillow
+
+      - name: Download the browser client
+        uses: actions/download-artifact@v4
+        with:
+          name: web-client
+          path: build/web-client
+
+      - name: Package the desktop app
+        shell: bash
+        env:
+          WEB_DIR: build/web-client
+        run: |
+          chmod +x kotlin packaging/bundle.sh
+          ./kotlin package -m desktop -f executable-jar
+          ./packaging/bundle.sh
+
+      - name: Upload bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: hl7-lookup-${{ matrix.bundle }}
+          path: build/bundles/*
+          if-no-files-found: error
