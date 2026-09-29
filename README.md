@@ -1,3 +1,5 @@
+<img width="1584" height="396" alt="HL7-Lookup-Banner" src="https://github.com/user-attachments/assets/9acac1c2-cf47-45b5-b03f-807ed70c853a" />
+
 # HL7 Lookup
 
 A workspace for HL7 v2. The same screen runs as a desktop window and in the browser. Both talk to one engine: HAPI on the JVM parses, validates, builds acknowledgements and serves the message definitions. The browser is a WebAssembly client of that engine.
