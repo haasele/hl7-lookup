@@ -45,6 +45,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -55,7 +56,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import hl7lookup.i18n.tr
+import kotlinx.coroutines.CoroutineScope
 import hl7lookup.motion.Illustration
 import hl7lookup.motion.IllustrationKind
 import hl7lookup.theme.Icon
@@ -129,28 +130,29 @@ fun SplitPane(
 ) {
     val palette = LocalPalette.current
     val clamped = clampFraction(fraction, 0.16f, 0.84f)
+    val report = rememberUpdatedState(onFraction)
+    val commit = rememberUpdatedState(onCommit)
     BoxWithConstraints(modifier) {
         val total = with(LocalDensity.current) { (if (vertical) maxHeight else maxWidth).toPx() }
         var dragging by remember { mutableStateOf(false) }
-        val live = remember { floatArrayOf(clamped) }
+        var shown by remember { mutableFloatStateOf(clamped) }
         val span = remember { floatArrayOf(total) }
         span[0] = total
-        if (!dragging) live[0] = clamped
+        if (!dragging) shown = clamped
         val state = rememberDraggableState { delta ->
-            live[0] = dragFraction(live[0], delta, span[0])
-            onFraction(live[0])
+            shown = dragFraction(shown, delta, span[0])
+            report.value(shown)
         }
-        val handle = Modifier
+        val startDrag = remember<suspend CoroutineScope.(Offset) -> Unit> { { dragging = true } }
+        val stopDrag = remember<suspend CoroutineScope.(Float) -> Unit> { { dragging = false; commit.value() } }
+        val handle = (if (vertical) Modifier.fillMaxWidth().height(10.dp) else Modifier.fillMaxHeight().width(10.dp))
             .background(palette.border)
             .pointerHoverIcon(resizeCursor(vertical))
             .draggable(
                 state,
                 if (vertical) Orientation.Vertical else Orientation.Horizontal,
-                onDragStarted = { dragging = true },
-                onDragStopped = {
-                    dragging = false
-                    onCommit()
-                },
+                onDragStarted = startDrag,
+                onDragStopped = stopDrag,
             )
         val grip = @Composable {
             Canvas(Modifier.size(if (vertical) 28.dp else 10.dp, if (vertical) 10.dp else 28.dp)) {
@@ -165,15 +167,15 @@ fun SplitPane(
         }
         if (vertical) {
             Column(Modifier.fillMaxSize()) {
-                Box(Modifier.fillMaxWidth().weight(clamped)) { first() }
-                Box(handle.fillMaxWidth().height(10.dp), contentAlignment = Alignment.Center) { grip() }
-                Box(Modifier.fillMaxWidth().weight(1f - clamped)) { second() }
+                Box(Modifier.fillMaxWidth().weight(shown)) { first() }
+                Box(handle, contentAlignment = Alignment.Center) { grip() }
+                Box(Modifier.fillMaxWidth().weight(1f - shown)) { second() }
             }
         } else {
             Row(Modifier.fillMaxSize()) {
-                Box(Modifier.fillMaxHeight().weight(clamped)) { first() }
-                Box(handle.fillMaxHeight().width(10.dp), contentAlignment = Alignment.Center) { grip() }
-                Box(Modifier.fillMaxHeight().weight(1f - clamped)) { second() }
+                Box(Modifier.fillMaxHeight().weight(shown)) { first() }
+                Box(handle, contentAlignment = Alignment.Center) { grip() }
+                Box(Modifier.fillMaxHeight().weight(1f - shown)) { second() }
             }
         }
     }
@@ -221,28 +223,30 @@ fun PanelHeader(title: String, modifier: Modifier = Modifier, actions: @Composab
     }
 }
 
-// Attaches drag gestures that report root positions. PanelHeader and TabStrip apply it to the grip.
+// Attaches a drag that stays alive while the pane highlights a drop target. PanelHeader and TabStrip apply it to the grip.
 @Composable
 private fun Modifier.paneDrag(move: PaneMove): Modifier {
-    var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
-    return onGloballyPositioned { coordinates = it }
+    val current = rememberUpdatedState(move)
+    val coordinates = remember { mutableStateOf<LayoutCoordinates?>(null) }
+    return onGloballyPositioned { coordinates.value = it }
         .pointerHoverIcon(moveCursor())
-        .pointerInput(move) {
-            var at = Offset.Zero
+        .pointerInput(Unit) {
             detectDragGestures(
                 onDragStart = { local ->
-                    at = coordinates?.localToRoot(local) ?: local
-                    move.onDragStart()
-                    move.onDrag(at)
+                    current.value.onDragStart()
+                    current.value.onDrag(rootPoint(coordinates.value, local))
                 },
-                onDrag = { _, amount ->
-                    at += amount
-                    move.onDrag(at)
-                },
-                onDragEnd = { move.onDrop() },
-                onDragCancel = { move.onCancel() },
+                onDrag = { change, _ -> current.value.onDrag(rootPoint(coordinates.value, change.position)) },
+                onDragEnd = { current.value.onDrop() },
+                onDragCancel = { current.value.onCancel() },
             )
         }
+}
+
+// Maps a grip-local point into the window root. paneDrag feeds it to drop hit testing.
+private fun rootPoint(coordinates: LayoutCoordinates?, local: Offset): Offset {
+    val coords = coordinates
+    return if (coords != null && coords.isAttached) coords.localToRoot(local) else local
 }
 
 // Six-dot handle hinting a pane can be moved. PanelHeader and TabStrip draw it when LocalPaneMove is set.

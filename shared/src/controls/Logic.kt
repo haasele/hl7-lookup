@@ -20,7 +20,7 @@ internal fun clampFraction(value: Float, min: Float = 0.12f, max: Float = 0.88f)
 
 // Turns a pixel drag into a new split fraction. SplitPane feeds deltas into it.
 internal fun dragFraction(current: Float, deltaPx: Float, totalPx: Float): Float =
-    if (totalPx <= 0f) current else clampFraction(current + deltaPx / totalPx)
+    if (totalPx <= 0f || totalPx.isInfinite() || totalPx.isNaN()) current else clampFraction(current + deltaPx / totalPx, 0.16f, 0.84f)
 
 // Formats part/total as a one-decimal percent. Controls.percent and statistics UIs call it.
 internal fun percent(part: Int, total: Int): String =

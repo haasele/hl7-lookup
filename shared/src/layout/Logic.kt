@@ -118,7 +118,10 @@ class LayoutState(private val platform: Platform) {
     // Updates which pane the pointer is over while dragging; PaneMove calls this on drag.
     fun hover(position: Offset) {
         val from = dragging ?: return
-        dropTarget = bounds.entries.firstOrNull { it.key != from && it.value.contains(position) }?.key
+        dropTarget = bounds.entries
+            .filter { (id, rect) -> id != from && rect.width > 1f && rect.height > 1f && rect.contains(position) }
+            .minByOrNull { (_, rect) -> rect.width * rect.height }
+            ?.key
     }
 
     // Commits a pane swap on drop; PaneMove calls this, it uses swapPanes and persist.
