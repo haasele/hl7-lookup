@@ -1,5 +1,6 @@
 package hl7lookup.workspace
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,6 +26,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -133,17 +137,17 @@ object Workspaces {
 }
 
 @Composable
-fun Workspace(state: WorkspaceState, monoFont: FontFamily, modifier: Modifier = Modifier) {
+fun Workspace(state: WorkspaceState, monoFont: FontFamily, logo: ImageBitmap? = null, modifier: Modifier = Modifier) {
     AppTheme(monoFont) {
         CompositionLocalProvider(LocalLanguage provides state.settings.current.language, LocalPlatform provides state.platform) {
-            if (state.platform.kind == PlatformKind.DESKTOP) StartupSplash { WorkspaceRoot(state, modifier) }
-            else WorkspaceRoot(state, modifier)
+            if (state.platform.kind == PlatformKind.DESKTOP) StartupSplash { WorkspaceRoot(state, modifier, logo) }
+            else WorkspaceRoot(state, modifier, logo)
         }
     }
 }
 
 @Composable
-private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier) {
+private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier, logo: ImageBitmap?) {
     val palette = LocalPalette.current
     val settings = state.settings.current
     val session = state.session
@@ -219,7 +223,7 @@ private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier) {
             }
         },
     ) {
-        TopBar(state, view)
+        TopBar(state, view, logo)
         DocumentTabs(session, onNewTab = state::newTab)
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             if (maxWidth < 900.dp) CompactLayout(state, view) else WideLayout(state, view)
@@ -239,6 +243,7 @@ private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier) {
                 state.dialog = DialogKind.NONE
             },
             onClose = { state.dialog = DialogKind.NONE },
+            logo = logo,
         )
     }
     Dialogs(state, view)
@@ -246,7 +251,7 @@ private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier) {
 }
 
 @Composable
-private fun TopBar(state: WorkspaceState, view: View) {
+private fun TopBar(state: WorkspaceState, view: View, logo: ImageBitmap?) {
     val palette = LocalPalette.current
     val platform = LocalPlatform.current
     val tab = view.tab
@@ -297,6 +302,9 @@ private fun TopBar(state: WorkspaceState, view: View) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
+        logo?.let {
+            Image(it, tr(WorkspaceTexts.appName), Modifier.padding(start = 4.dp).size(26.dp), contentScale = ContentScale.Fit)
+        }
         Label(tr(WorkspaceTexts.appName), Modifier.padding(horizontal = 8.dp), color = Color.White, weight = FontWeight.Bold, size = 14.sp, maxLines = 1)
         MenuButton(tr(WorkspaceTexts.file), file)
         MenuButton(tr(WorkspaceTexts.tools), tools)

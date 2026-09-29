@@ -1,5 +1,6 @@
 package hl7lookup.desktop.window
 
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
 import hl7lookup.engine.Engines
@@ -78,11 +79,21 @@ internal fun storageDirectory(): File {
 internal fun keyFile(directory: File, key: String): File = directory.resolve(key.replace(Regex("[^A-Za-z0-9._-]"), "_") + ".json")
 
 internal fun loadFont(): FontFamily? = runCatching {
-    val bytes = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/JetBrainsMono-Regular.ttf")!!.use { it.readBytes() }
-    FontFamily(Font("JetBrainsMono-Regular", bytes))
+    val bytes = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/DroidSansMono.ttf")!!.use { it.readBytes() }
+    FontFamily(Font("DroidSansMono", bytes))
 }.getOrNull()
 
 internal fun iconBytes(): ByteArray? = Thread.currentThread().contextClassLoader.getResourceAsStream("icons/hl7.png")?.use { it.readBytes() }
+
+internal fun applyWindowIcon(window: java.awt.Window) {
+    val bytes = iconBytes() ?: return
+    val image = javax.imageio.ImageIO.read(java.io.ByteArrayInputStream(bytes)) ?: return
+    window.iconImages = listOf(image)
+}
+
+internal fun logoBitmap(): androidx.compose.ui.graphics.ImageBitmap? = iconBytes()?.let {
+    org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()
+}
 
 internal fun readFiles(files: List<File>): List<OpenedFile> = files.filter { it.isFile }.mapNotNull { file ->
     runCatching { OpenedFile(file.absolutePath, file.readText()) }.getOrNull()

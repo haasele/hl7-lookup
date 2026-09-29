@@ -1,6 +1,7 @@
 package hl7lookup.catalog
 
 import androidx.compose.foundation.HorizontalScrollbar
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.ScrollbarStyle
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +35,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -82,6 +86,7 @@ fun WikiScreen(
     samples: List<String>,
     onOpen: (String, String) -> Unit,
     onClose: () -> Unit,
+    logo: ImageBitmap? = null,
 ) {
     val palette = LocalPalette.current
     val texts = CatalogTexts
@@ -119,6 +124,9 @@ fun WikiScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            logo?.let {
+                Image(it, tr(texts.title), Modifier.size(26.dp), contentScale = ContentScale.Fit)
+            }
             Label(tr(texts.title), color = palette.text, weight = FontWeight.Bold, size = 16.sp)
             PathChip(tr(texts.messagePath), path == WikiBrowse.TYPES, visible.size.takeIf { query.isNotBlank() }) { path = WikiBrowse.TYPES }
             PathChip(tr(texts.segmentPath), path == WikiBrowse.SEGMENTS, visibleSegments.size.takeIf { query.isNotBlank() }) { path = WikiBrowse.SEGMENTS }

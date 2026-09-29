@@ -4,7 +4,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -45,7 +44,8 @@ fun main(args: Array<String>) {
 
     val platform = DesktopPlatform(storageDirectory()).apply { serverAddress = server?.address }
     val font = loadFont() ?: FontFamily.Monospace
-    val icon = iconBytes()?.let { BitmapPainter(org.jetbrains.skia.Image.makeFromEncoded(it).toComposeImageBitmap()) }
+    val logo = logoBitmap()
+    val icon = logo?.let { BitmapPainter(it) }
     val files = readFiles(options.files)
 
     application {
@@ -67,8 +67,11 @@ fun main(args: Array<String>) {
             icon = icon,
             state = state,
         ) {
-            LaunchedEffect(window) { releaseWindowSizeLimits(window) }
-            Workspace(workspace, font)
+            LaunchedEffect(window) {
+                releaseWindowSizeLimits(window)
+                applyWindowIcon(window)
+            }
+            Workspace(workspace, font, logo)
         }
     }
 }

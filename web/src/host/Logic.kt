@@ -1,7 +1,10 @@
 package hl7lookup.web.host
 
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.platform.Font
+import org.jetbrains.skia.Image
 import hl7lookup.dictionary.Hl7Dictionary
 import hl7lookup.engine.AckRequest
 import hl7lookup.engine.ApiRoute
@@ -95,11 +98,18 @@ private fun byteAt(array: JsAny, index: Int): Byte = js("array[index]")
 
 internal fun accept(extensions: List<String>): String = extensions.joinToString(",") { ".$it" }
 
+internal suspend fun loadLogo(url: String): ImageBitmap? {
+    val array = runCatching { fetchBytes(url).await<JsAny?>() }.getOrNull() ?: return null
+    val size = lengthOf(array)
+    val bytes = ByteArray(size) { byteAt(array, it) }
+    return runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
+}
+
 internal suspend fun loadMonoFont(url: String): FontFamily? {
     val array = runCatching { fetchBytes(url).await<JsAny?>() }.getOrNull() ?: return null
     val size = lengthOf(array)
     val bytes = ByteArray(size) { byteAt(array, it) }
-    return runCatching { FontFamily(Font("JetBrainsMono-Regular", bytes)) }.getOrNull()
+    return runCatching { FontFamily(Font("DroidSansMono", bytes)) }.getOrNull()
 }
 
 class BrowserPlatform : Platform {

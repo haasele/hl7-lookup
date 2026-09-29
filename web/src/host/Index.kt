@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.window.ComposeViewport
 import hl7lookup.workspace.Workspace
@@ -21,10 +22,14 @@ fun main() {
     ComposeViewport {
         val scope = rememberCoroutineScope()
         var font by remember { mutableStateOf<FontFamily?>(null) }
-        LaunchedEffect(Unit) { font = loadMonoFont("$base/fonts/JetBrainsMono-Regular.ttf") ?: FontFamily.Monospace }
+        var logo by remember { mutableStateOf<ImageBitmap?>(null) }
+        LaunchedEffect(Unit) {
+            logo = loadLogo("$base/icons/hl7.png")
+            font = loadMonoFont("$base/fonts/DroidSansMono.ttf") ?: FontFamily.Monospace
+        }
         val workspace = remember { Workspaces.create(platform, engine, transport, scope, APP_VERSION) }
         font?.let {
-            Workspace(workspace, it)
+            Workspace(workspace, it, logo)
             LaunchedEffect(it) { dismissLoadingScreen() }
         }
     }
