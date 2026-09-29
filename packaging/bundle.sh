@@ -57,6 +57,16 @@ rm -f "$classes/META-INF/MANIFEST.MF"
 jar cfe "$input/hl7-lookup.jar" hl7lookup.desktop.window.IndexKt -C "$classes" .
 cp "$stage/extract/BOOT-INF/lib/"*.jar "$input/"
 
+runnable="$bundles/hl7-lookup-${version}-${os}-${arch}.jar"
+cp "$jar" "$runnable"
+web_entries=()
+while IFS= read -r file; do
+  web_entries+=("BOOT-INF/classes/${file##*/}")
+done < <(find "$classes" -maxdepth 1 -type f \( -name '*.mjs' -o -name '*.wasm' -o -name '*.js' \))
+if [ ${#web_entries[@]} -gt 0 ]; then
+  (cd "$stage/extract" && jar uf "$(native "$runnable")" "${web_entries[@]}")
+fi
+
 icon_arg=()
 case "$os" in
   linux)

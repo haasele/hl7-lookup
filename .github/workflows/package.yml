@@ -1,4 +1,4 @@
-# Builds installers for Windows, macOS and Linux. Push to main or next-gen starts it, and it can be run by hand.
+# Builds a runnable jar plus installers for Windows, macOS and Linux. Push to main or next-gen starts it, and it can be run by hand.
 name: Package
 
 on:
