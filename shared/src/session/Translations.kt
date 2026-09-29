@@ -1,7 +1,9 @@
+// Tab wording. session/Index reads it.
 package hl7lookup.session
 
 import hl7lookup.i18n.Text
 
+// Labels for tabs and message counts. session/Index and DocumentTabs read these.
 object SessionTexts {
     val untitled = Text("Untitled", "Unbenannt")
     val received = Text("Received", "Empfangen")

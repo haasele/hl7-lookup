@@ -1,7 +1,9 @@
+// Date wording. datetime/Index reads it.
 package hl7lookup.datetime
 
 import hl7lookup.i18n.Text
 
+// Past and future plural forms for one relative unit. Index.describe reads these via relativeTexts.
 internal class RelativeTexts(val pastOne: Text, val pastMany: Text, val futureOne: Text, val futureMany: Text)
 
 internal val relativeTexts = mapOf(

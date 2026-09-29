@@ -1,7 +1,9 @@
+// Settings wording. settings/Index reads it.
 package hl7lookup.settings
 
 import hl7lookup.i18n.Text
 
+// English and German strings for the settings dialog. Index reads them via tr().
 object SettingsTexts {
     val title = Text("Settings", "Einstellungen")
     val dateFormat = Text("Date format", "Datumsformat")

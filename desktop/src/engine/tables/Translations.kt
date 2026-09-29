@@ -1,7 +1,10 @@
+// Table codes and descriptions. engine/tables/Index reads them.
 package hl7lookup.desktop.engine.tables
 
+// Holds a table name and code/description pairs. authoredTables stores these; table() builds them.
 internal class AuthoredTable(val name: String, val entries: List<Pair<String, String>>)
 
+// Builds an AuthoredTable entry. The authoredTables map initializer calls it for each HL7 table.
 private fun table(name: String, vararg entries: Pair<String, String>) = AuthoredTable(name, entries.toList())
 
 internal val authoredTables: Map<String, AuthoredTable> = mapOf(

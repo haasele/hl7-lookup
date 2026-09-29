@@ -1,7 +1,9 @@
+// List wording. messages/Index reads it.
 package hl7lookup.messages
 
 import hl7lookup.i18n.Text
 
+// Column and empty-state wording for the message list. messages/Index reads it.
 object MessageListTexts {
     val title = Text("Messages", "Nachrichten")
     val time = Text("Time (MSH-7)", "Zeit (MSH-7)")

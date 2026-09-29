@@ -1,3 +1,4 @@
+// Locks the plain-language reading of the samples. Calls story/Index.
 package hl7lookup.desktop.engine
 
 import hl7lookup.datetime.DateStyle
@@ -12,10 +13,12 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+// Checks plain-language readings of the samples. Calls Stories and HapiEngine.
 class StoryTest {
     private val engine = HapiEngine()
     private val now = 1_790_000_000_000L
 
+    // Builds a story and inspects every sample. Calls Stories.build and HapiEngine.inspect.
     @Test
     fun everySampleReadsAsSentencesAndParses() = runBlocking {
         for (info in Samples.list()) {
@@ -33,6 +36,7 @@ class StoryTest {
         }
     }
 
+    // Asserts ADT A01 names patient, sex and class. Calls Stories.build and plain.
     @Test
     fun admissionStoryNamesPatientAndCodes() = runBlocking {
         val message = Er7.parse(Samples.text("adt-a01")!!)

@@ -1,3 +1,4 @@
+// Incoming MLLP and HTTP listeners. Workspace polls them into the message list.
 package hl7lookup.receivers
 
 import androidx.compose.foundation.layout.Arrangement
@@ -37,13 +38,19 @@ import hl7lookup.i18n.tr
 import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 
+// Facade for receiver configs and addresses. Workspace polls listeners through Receivers.
 object Receivers {
+    // Maps a Receiver to engine ReceiverConfig. Start/stop flows call it; it uses configOf.
     fun config(receiver: Receiver): ReceiverConfig = configOf(receiver)
+    // Whether a receiver form can be saved. Dialogs call it; it uses isComplete.
     fun complete(receiver: Receiver): Boolean = isComplete(receiver)
+    // Human-readable listen address. Panels call it; it uses addressOf.
     fun address(receiver: Receiver): String = addressOf(receiver)
+    // Hands out ReceiverTexts. Workspace and panels read labels through this.
     fun texts() = ReceiverTexts
 }
 
+// List of listeners with start/stop controls. Workspace embeds it; it uses ReceiverStore and ReceiverDialog.
 @Composable
 fun ReceiversPanel(
     store: ReceiverStore,
@@ -98,6 +105,7 @@ fun ReceiversPanel(
     }
 }
 
+// Modal to create or edit a receiver. ReceiversPanel opens it; it validates via isComplete.
 @Composable
 fun ReceiverDialog(initial: Receiver, tabs: List<Pair<String, String>>, onSave: (Receiver) -> Unit, onDismiss: () -> Unit) {
     var draft by remember(initial.id) { mutableStateOf(initial) }

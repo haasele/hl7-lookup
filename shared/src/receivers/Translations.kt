@@ -1,7 +1,9 @@
+// Receiver wording. receivers/Index reads it.
 package hl7lookup.receivers
 
 import hl7lookup.i18n.Text
 
+// Labels for the receivers panel and dialog. receivers/Index reads it.
 object ReceiverTexts {
     val title = Text("Receivers", "Receiver")
     val add = Text("New receiver", "Neuer Receiver")

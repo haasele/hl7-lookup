@@ -1,3 +1,4 @@
+// Outgoing MLLP and HTTP endpoints. Workspace sends the active message through them.
 package hl7lookup.senders
 
 import androidx.compose.foundation.layout.Arrangement
@@ -36,13 +37,19 @@ import hl7lookup.i18n.tr
 import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 
+// Facade for sender endpoints and completeness. Workspace sends through Senders.
 object Senders {
+    // Maps a Sender to an engine Endpoint. Send flows call it; it uses endpointOf.
     fun endpoint(sender: Sender): Endpoint = endpointOf(sender)
+    // Whether a sender form can be saved. Dialogs call it; it uses isComplete.
     fun complete(sender: Sender): Boolean = isComplete(sender)
+    // Human-readable address line. Panels call it; it uses addressOf.
     fun address(sender: Sender, tabTitle: (String) -> String?): String = addressOf(sender, tabTitle)
+    // Hands out SenderTexts. Workspace and panels read labels through this.
     fun texts() = SenderTexts
 }
 
+// List of outgoing endpoints with send actions. Workspace embeds it; it uses SenderStore and SenderDialog.
 @Composable
 fun SendersPanel(
     store: SenderStore,
@@ -87,6 +94,7 @@ fun SendersPanel(
     }
 }
 
+// Modal to create or edit a sender. SendersPanel opens it; it validates via isComplete.
 @Composable
 fun SenderDialog(initial: Sender, tabs: List<Pair<String, String>>, onSave: (Sender) -> Unit, onDismiss: () -> Unit) {
     var draft by remember(initial.id) { mutableStateOf(initial) }

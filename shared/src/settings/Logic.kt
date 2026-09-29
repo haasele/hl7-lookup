@@ -1,3 +1,4 @@
+// Persisted preference values. settings/Index calls it.
 package hl7lookup.settings
 
 import androidx.compose.runtime.getValue
@@ -10,6 +11,7 @@ import hl7lookup.platform.Platforms
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
+// User preference values persisted to the platform. SettingsState holds the live copy.
 @Serializable
 data class Settings(
     val dateStyle: DateStyle = DateStyle.EUROPEAN,
@@ -22,18 +24,22 @@ data class Settings(
 
 private val settingsJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
+// Reads Settings from platform storage. SettingsState constructor calls it.
 internal fun loadSettings(platform: Platform): Settings =
     platform.loadValue(Platforms.key("settings", "v1"))
         ?.let { runCatching { settingsJson.decodeFromString(Settings.serializer(), it) }.getOrNull() }
         ?: Settings()
 
+// Writes Settings to platform storage. SettingsState.update calls it.
 internal fun saveSettings(platform: Platform, settings: Settings) =
     platform.storeValue(Platforms.key("settings", "v1"), settingsJson.encodeToString(Settings.serializer(), settings))
 
+// Live settings with load and save. SettingsDialog and Workspace read current and call update.
 class SettingsState(private val platform: Platform) {
     var current by mutableStateOf(loadSettings(platform))
         private set
 
+    // Applies a change and persists. Dialog controls call this on every edit.
     fun update(change: (Settings) -> Settings) {
         current = change(current)
         saveSettings(platform, current)

@@ -1,3 +1,4 @@
+// Version, language and validation preferences. Workspace opens the dialog from Tools.
 package hl7lookup.settings
 
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import hl7lookup.i18n.I18n
 import hl7lookup.i18n.tr
 import hl7lookup.theme.LocalPalette
 
+// Modal for language, dates and validation prefs. Workspace opens it from Tools; writes via SettingsState.
 @Composable
 fun SettingsDialog(state: SettingsState, versions: List<String>, onDismiss: () -> Unit) {
     val settings = state.current

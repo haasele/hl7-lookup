@@ -1,7 +1,9 @@
+// Dictionary status wording. dictionary/Index reads it.
 package hl7lookup.dictionary
 
 import hl7lookup.i18n.Text
 
+// Loading, failure and field-meta wording. dictionary/Index reads it via Dictionaries.texts.
 object DictionaryTexts {
     val loading = Text("Loading HL7 {0} definitions…", "HL7-{0}-Definitionen werden geladen…")
     val failed = Text("HL7 {0} definitions are unavailable.", "HL7-{0}-Definitionen sind nicht verfügbar.")

@@ -1,3 +1,4 @@
+// Sockets, polls and acknowledgements. transport/Index exposes them.
 package hl7lookup.desktop.transport
 
 import com.sun.net.httpserver.HttpServer
@@ -44,13 +45,16 @@ internal const val CARRIAGE_RETURN = 0x0D
 internal const val HL7_MEDIA_TYPE = "x-application/hl7-v2+er7; charset=utf-8"
 private const val EVENT_LIMIT = 5000
 
+// Normalizes newlines to CR for HL7 wire. frame, sendHttp and Transports.wire call it.
 internal fun toWire(text: String): String = text.replace("\r\n", "\r").replace('\n', '\r').trimEnd('\r') + "\r"
 
+// Wraps wire text in MLLP start/end bytes. sendMllp and MllpListener write it.
 internal fun frame(text: String): ByteArray {
     val body = toWire(text).toByteArray(Charsets.UTF_8)
     return byteArrayOf(START_BLOCK.toByte()) + body + byteArrayOf(END_BLOCK.toByte(), CARRIAGE_RETURN.toByte())
 }
 
+// Reads one MLLP-framed message from a stream. sendMllp and MllpListener call it.
 internal fun readFrame(input: InputStream): String? {
     var byte = input.read()
     while (byte != -1 && byte != START_BLOCK) byte = input.read()
@@ -67,6 +71,7 @@ internal fun readFrame(input: InputStream): String? {
     }
 }
 
+// Maps socket/HTTP errors to FailureCause. failed, diagnose and hub.start call it.
 internal fun causeOf(error: Throwable): FailureCause = when (error) {
     is UnknownHostException -> FailureCause.UNKNOWN_HOST
     is BindException -> FailureCause.PORT_IN_USE
@@ -77,9 +82,11 @@ internal fun causeOf(error: Throwable): FailureCause = when (error) {
     else -> error.cause?.let(::causeOf) ?: FailureCause.OTHER
 }
 
+// Builds a failed SendResult from a throwable. sendMllp and sendHttp catch with it.
 private fun failed(started: Long, error: Throwable) =
     SendResult(false, null, System.currentTimeMillis() - started, causeOf(error), error.message ?: error::class.simpleName)
 
+// Detects ACK messages from MSH-9. sendMllp and TransportTest call it.
 internal fun isAcknowledgement(text: String): Boolean {
     val header = text.lineSequence().firstOrNull()?.takeIf { it.startsWith("MSH") && it.length > 4 } ?: return false
     val fields = header.split(header[3])
@@ -87,6 +94,7 @@ internal fun isAcknowledgement(text: String): Boolean {
     return fields.getOrNull(8)?.substringBefore(component)?.trim().equals("ACK", ignoreCase = true)
 }
 
+// Connects over TCP, writes an MLLP frame and reads the ACK. send() dispatches to it.
 internal fun sendMllp(endpoint: Endpoint, text: String): SendResult {
     val started = System.currentTimeMillis()
     return try {
@@ -106,12 +114,14 @@ internal fun sendMllp(endpoint: Endpoint, text: String): SendResult {
 
 private val httpClient: HttpClient by lazy { HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build() }
 
+// Builds an HTTP URI from an Endpoint. sendHttp and diagnose call it.
 internal fun uriOf(endpoint: Endpoint): URI {
     val path = endpoint.path.ifBlank { "/" }.let { if (it.startsWith("/")) it else "/$it" }
     val scheme = if (endpoint.port == 443) "https" else "http"
     return URI("$scheme://${endpoint.host}:${endpoint.port}$path")
 }
 
+// POSTs ER7 over HTTP and maps the status. send() dispatches to it.
 internal fun sendHttp(endpoint: Endpoint, text: String): SendResult {
     val started = System.currentTimeMillis()
     return try {
@@ -130,12 +140,14 @@ internal fun sendHttp(endpoint: Endpoint, text: String): SendResult {
     }
 }
 
+// Chooses MLLP, HTTP or TAB send. DesktopTransport.send and tests call it.
 internal fun send(endpoint: Endpoint, text: String): SendResult = when (endpoint.protocol) {
     Protocol.MLLP -> sendMllp(endpoint, text)
     Protocol.HTTP -> sendHttp(endpoint, text)
     Protocol.TAB -> SendResult(false, null, 0, FailureCause.OTHER, "TAB")
 }
 
+// Times a diagnosis probe and captures errors. diagnose uses it for each stage.
 private inline fun step(kind: DiagnosisKind, block: () -> String): Pair<DiagnosisStep, Throwable?> {
     val started = System.currentTimeMillis()
     return try {
@@ -145,6 +157,7 @@ private inline fun step(kind: DiagnosisKind, block: () -> String): Pair<Diagnosi
     }
 }
 
+// Resolves, connects and optionally probes HTTP. DesktopTransport.diagnose calls it.
 internal fun diagnose(endpoint: Endpoint): Diagnosis {
     val steps = mutableListOf<DiagnosisStep>()
     val (resolve, resolveError) = step(DiagnosisKind.RESOLVE) {
@@ -173,10 +186,13 @@ internal fun diagnose(endpoint: Endpoint): Diagnosis {
     return Diagnosis(steps)
 }
 
+// Closeable receiver socket or HTTP server. MllpListener and HttpListener implement it.
 internal interface Listener {
+    // Shuts down the listener. TransportHub.stop and stopAll call it.
     fun close()
 }
 
+// Accepts MLLP sockets and auto-acks. TransportHub.start creates it for MLLP receivers.
 internal class MllpListener(port: Int, private val handle: (String, String) -> String?) : Listener {
     private val server = ServerSocket(port)
     private val pool = Executors.newCachedThreadPool { runnable -> Thread(runnable, "mllp-$port").apply { isDaemon = true } }
@@ -190,6 +206,7 @@ internal class MllpListener(port: Int, private val handle: (String, String) -> S
         }
     }
 
+    // Reads frames from one client socket and writes ACKs. MllpListener accept loop runs it.
     private fun serve(socket: Socket) = socket.use {
         val remote = "${socket.inetAddress.hostAddress}:${socket.port}"
         val input = socket.getInputStream()
@@ -201,12 +218,14 @@ internal class MllpListener(port: Int, private val handle: (String, String) -> S
         }
     }
 
+    // Shuts down the listener. TransportHub.stop and stopAll call it.
     override fun close() {
         runCatching { server.close() }
         pool.shutdownNow()
     }
 }
 
+// Serves POST HL7 on a path and returns ACKs. TransportHub.start creates it for HTTP receivers.
 internal class HttpListener(port: Int, path: String, private val handle: (String, String) -> String?) : Listener {
     private val server = HttpServer.create(InetSocketAddress(port), 0)
 
@@ -234,11 +253,14 @@ internal class HttpListener(port: Int, path: String, private val handle: (String
         server.start()
     }
 
+    // Shuts down the listener. TransportHub.stop and stopAll call it.
     override fun close() = server.stop(0)
 }
 
+// Tracks a live receiver config, listener and count. TransportHub keeps them in a map.
 private class Running(val config: ReceiverConfig, val listener: Listener, val received: AtomicInteger)
 
+// Starts receivers, stores events and polls them. DesktopTransport owns one hub.
 internal class TransportHub(private val acknowledge: (String) -> String?) {
     private val running = ConcurrentHashMap<String, Running>()
     private val failures = ConcurrentHashMap<String, ReceiverStatus>()
@@ -246,6 +268,7 @@ internal class TransportHub(private val acknowledge: (String) -> String?) {
     private val sequence = AtomicLong()
     private val epoch = java.util.UUID.randomUUID().toString()
 
+    // Stores a received message and optional ACK. Listener handlers call it per message.
     private fun record(config: ReceiverConfig, counter: AtomicInteger, text: String, remote: String): String? {
         val ack = if (config.autoAck) runCatching { acknowledge(text) }.getOrNull() else null
         counter.incrementAndGet()
@@ -254,6 +277,7 @@ internal class TransportHub(private val acknowledge: (String) -> String?) {
         return ack
     }
 
+    // Opens an MLLP or HTTP listener for a config. DesktopTransport.startReceiver calls it.
     fun start(config: ReceiverConfig): ReceiverStatus {
         stop(config.id)
         return try {
@@ -271,16 +295,20 @@ internal class TransportHub(private val acknowledge: (String) -> String?) {
         }
     }
 
+    // Closes one receiver by id. DesktopTransport.stopReceiver and start call it.
     fun stop(id: String): ReceiverStatus {
         val current = running.remove(id)
         current?.listener?.close()
         return ReceiverStatus(id, false, current?.received?.get() ?: 0)
     }
 
+    // Lists running and failed receiver statuses. DesktopTransport.receivers calls it.
     fun statuses(): List<ReceiverStatus> =
         running.values.map { ReceiverStatus(it.config.id, true, it.received.get()) } + failures.values.filter { !running.containsKey(it.id) }
 
+    // Returns events after a sequence number. DesktopTransport.poll calls it.
     fun poll(after: Long): PollBatch = PollBatch(epoch, events.filter { it.sequence > after })
 
+    // Stops every running receiver. DesktopTransport.close calls it.
     fun stopAll() = running.keys.toList().forEach(::stop)
 }

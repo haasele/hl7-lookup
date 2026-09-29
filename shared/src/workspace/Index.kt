@@ -1,3 +1,4 @@
+// Composes every pane and dialog. The desktop window and the web host call Workspace.
 package hl7lookup.workspace
 
 import androidx.compose.foundation.Image
@@ -128,14 +129,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+// Creates workspace state and type/event helpers. Desktop, web, and Index call it.
 object Workspaces {
+    // Builds WorkspaceState with platform, engine, and transport. Hosts call Workspaces.create.
     fun create(platform: Platform, engine: Hl7Engine, transport: Hl7Transport, scope: CoroutineScope, appVersion: String): WorkspaceState =
         WorkspaceState(platform, engine, transport, scope, appVersion)
+    // Lists message types from a dictionary. New-message UI goes through Workspaces.
     fun types(dictionary: Hl7Dictionary?): List<String> = typesOf(dictionary)
+    // Lists events for a message type. New-message UI goes through Workspaces.
     fun events(dictionary: Hl7Dictionary?, type: String): List<String> = eventsOf(dictionary, type)
+    // Exposes WorkspaceTexts for other features. Callers that need wording use it.
     fun texts() = WorkspaceTexts
 }
 
+// Builds the root app shell and wires every pane. Desktop window and web host call it.
 @Composable
 fun Workspace(state: WorkspaceState, monoFont: FontFamily, logo: ImageBitmap? = null, modifier: Modifier = Modifier) {
     AppTheme(monoFont) {
@@ -146,6 +153,7 @@ fun Workspace(state: WorkspaceState, monoFont: FontFamily, logo: ImageBitmap? = 
     }
 }
 
+// Lays out bars, panes, and dialogs over WorkspaceState. Workspace calls it after theme setup.
 @Composable
 private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier, logo: ImageBitmap?) {
     val palette = LocalPalette.current
@@ -250,6 +258,7 @@ private fun WorkspaceRoot(state: WorkspaceState, modifier: Modifier, logo: Image
     }
 }
 
+// Renders menus, send, and search. WorkspaceRoot places it at the top.
 @Composable
 private fun TopBar(state: WorkspaceState, view: View, logo: ImageBitmap?) {
     val palette = LocalPalette.current
@@ -331,6 +340,7 @@ private fun TopBar(state: WorkspaceState, view: View, logo: ImageBitmap?) {
     }
 }
 
+// Cross-tab search field and hit stepping. TopBar embeds it.
 @Composable
 private fun SearchBox(state: WorkspaceState) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -346,6 +356,7 @@ private fun SearchBox(state: WorkspaceState) {
     }
 }
 
+// Multi-pane workbench for wide windows. WorkspaceRoot picks it over CompactLayout.
 @Composable
 private fun WideLayout(state: WorkspaceState, view: View) {
     Workbench(
@@ -362,6 +373,7 @@ private fun WideLayout(state: WorkspaceState, view: View) {
     LayoutPresetDialog(state.layouts)
 }
 
+// Tabbed single-pane layout for narrow widths. WorkspaceRoot picks it under 900.dp.
 @Composable
 private fun CompactLayout(state: WorkspaceState, view: View) {
     var pane by remember { mutableStateOf("editor") }
@@ -386,6 +398,7 @@ private fun CompactLayout(state: WorkspaceState, view: View) {
     }
 }
 
+// Shows the human-readable story for the message. WideLayout and CompactLayout host it.
 @Composable
 private fun StoryPanel(state: WorkspaceState, view: View) {
     val settings = state.settings.current
@@ -413,6 +426,7 @@ private fun StoryPanel(state: WorkspaceState, view: View) {
     }
 }
 
+// Raw ER7 editor with marks and empty state. WideLayout and CompactLayout host it.
 @Composable
 private fun EditorPanel(state: WorkspaceState, view: View) {
     val palette = LocalPalette.current
@@ -460,6 +474,7 @@ private fun EditorPanel(state: WorkspaceState, view: View) {
     }
 }
 
+// Field grid for the active message. WideLayout and CompactLayout host it.
 @Composable
 private fun GridPanel(state: WorkspaceState, view: View) {
     val settings = state.settings.current
@@ -481,6 +496,7 @@ private fun GridPanel(state: WorkspaceState, view: View) {
     }
 }
 
+// Bottom tabs for messages, senders, receivers, integrations, ACKs. Layouts host it.
 @Composable
 private fun SessionPanel(state: WorkspaceState, view: View) {
     val palette = LocalPalette.current
@@ -556,6 +572,7 @@ private fun SessionPanel(state: WorkspaceState, view: View) {
     }
 }
 
+// Side tabs for statistics and validation. WideLayout and CompactLayout host it.
 @Composable
 private fun SidePanel(state: WorkspaceState, view: View) {
     val palette = LocalPalette.current
@@ -583,6 +600,7 @@ private fun SidePanel(state: WorkspaceState, view: View) {
     }
 }
 
+// Field value statistics across the tab. SidePanel shows it for STATISTICS.
 @Composable
 private fun StatisticsSection(state: WorkspaceState, view: View) {
     val tab = view.tab
@@ -606,6 +624,7 @@ private fun StatisticsSection(state: WorkspaceState, view: View) {
     )
 }
 
+// Engine status, findings, and notes. WorkspaceRoot places it at the bottom.
 @Composable
 private fun StatusBar(state: WorkspaceState, view: View) {
     val palette = LocalPalette.current
@@ -635,6 +654,7 @@ private fun StatusBar(state: WorkspaceState, view: View) {
     }
 }
 
+// Routes DialogKind to the matching modal. WorkspaceRoot overlays it.
 @Composable
 private fun Dialogs(state: WorkspaceState, view: View) {
     val close = { state.dialog = DialogKind.NONE }
@@ -674,6 +694,7 @@ private fun Dialogs(state: WorkspaceState, view: View) {
     }
 }
 
+// Builds compare choices and opens CompareDialog. Dialogs opens it for COMPARE.
 @Composable
 private fun CompareSection(state: WorkspaceState, view: View, close: () -> Unit) {
     val choices = mutableListOf<CompareChoice>()
@@ -710,6 +731,7 @@ private fun CompareSection(state: WorkspaceState, view: View, close: () -> Unit)
     )
 }
 
+// Picks type, event, and version then creates a message. Dialogs opens it.
 @Composable
 private fun NewMessageDialog(state: WorkspaceState, close: () -> Unit) {
     val palette = LocalPalette.current
@@ -735,6 +757,7 @@ private fun NewMessageDialog(state: WorkspaceState, close: () -> Unit) {
     }
 }
 
+// Chooses a target tab and copies messages. Dialogs opens it for SEND_TO_TAB.
 @Composable
 private fun SendToTabDialog(state: WorkspaceState, view: View, close: () -> Unit) {
     val tab = view.tab ?: return
@@ -753,6 +776,7 @@ private fun SendToTabDialog(state: WorkspaceState, view: View, close: () -> Unit
     }
 }
 
+// Shows connection test steps from WorkspaceState.diagnosis. Dialogs opens it.
 @Composable
 private fun DiagnosisDialog(state: WorkspaceState, close: () -> Unit) {
     val palette = LocalPalette.current
@@ -772,6 +796,7 @@ private fun DiagnosisDialog(state: WorkspaceState, close: () -> Unit) {
     }
 }
 
+// Form to generate an ACK for the current message. Dialogs opens it for ACK.
 @Composable
 private fun AckDialog(state: WorkspaceState, close: () -> Unit) {
     val palette = LocalPalette.current

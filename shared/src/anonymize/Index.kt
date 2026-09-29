@@ -1,3 +1,4 @@
+// Anonymise dialog. Workspace runs it on the current message or the whole tab.
 package hl7lookup.anonymize
 
 import androidx.compose.foundation.layout.Arrangement
@@ -25,10 +26,13 @@ import hl7lookup.theme.LocalPalette
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
+// Facade exposing anonymize wording. Workspace opens the dialog through it.
 object Anonymize {
+    // Exposes anonymize wording. Workspace reads it via tr().
     fun texts() = AnonymizeTexts
 }
 
+// Options dialog that runs the anonymizer. Workspace opens it for the current message or tab.
 @Composable
 fun AnonymizeDialog(
     anonymizer: Anonymizer,

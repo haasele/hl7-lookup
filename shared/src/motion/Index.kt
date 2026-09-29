@@ -1,3 +1,4 @@
+// Empty-state drawings and the desktop splash. EmptyState and Workspace use Motion.
 package hl7lookup.motion
 
 import androidx.compose.animation.core.Animatable
@@ -45,13 +46,19 @@ import hl7lookup.i18n.tr
 import hl7lookup.theme.LocalPalette
 import kotlinx.coroutines.delay
 
+// Entry point for SVG scenes and splash; EmptyState and splash UI call it, methods forward to Logic.
 object Motion {
+    // Parses raw SVG into a drawable scene; callers use this, it forwards to parseSvg.
     fun read(svg: String): VectorScene = parseSvg(svg)
+    // Builds the empty-state scene for a kind; Illustration calls this, it forwards to illustrationScene.
     fun illustration(kind: IllustrationKind): VectorScene = illustrationScene(kind)
+    // Builds the startup splash scene; SplashCover calls this, it forwards to splashScene.
     fun splash(): VectorScene = splashScene()
+    // Exposes motion wording; splash UI calls this, it returns MotionTexts.
     fun texts() = MotionTexts
 }
 
+// Draws an empty-state illustration with a reveal animation; EmptyState and panels compose this.
 @Composable
 fun Illustration(kind: IllustrationKind, modifier: Modifier = Modifier, size: Dp = 84.dp) {
     val scene = remember(kind) { Motion.illustration(kind) }
@@ -72,6 +79,7 @@ fun Illustration(kind: IllustrationKind, modifier: Modifier = Modifier, size: Dp
     }
 }
 
+// Wraps app content and shows the splash overlay once; Workspace composes this around the shell.
 @Composable
 fun StartupSplash(content: @Composable () -> Unit) {
     var visible by remember { mutableStateOf(true) }
@@ -81,6 +89,7 @@ fun StartupSplash(content: @Composable () -> Unit) {
     }
 }
 
+// Full-screen splash draw, hold and fade; StartupSplash shows it until finished or tapped.
 @Composable
 private fun SplashCover(onFinished: () -> Unit) {
     val palette = LocalPalette.current
@@ -137,6 +146,7 @@ private fun SplashCover(onFinished: () -> Unit) {
     }
 }
 
+// Animated accent bar under the splash text; SplashCover places it below the tagline.
 @Composable
 private fun SweepTrack() {
     val shift by rememberInfiniteTransition().animateFloat(

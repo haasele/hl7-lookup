@@ -1,7 +1,9 @@
+// Engine error wording. engine/Index reads it.
 package hl7lookup.engine
 
 import hl7lookup.i18n.Text
 
+// Offline-engine messaging for the UI. Engines.texts exposes it; workspace reads it.
 object EngineTexts {
     val offline = Text("HL7 engine unreachable", "HL7-Engine nicht erreichbar")
     val offlineDetail = Text(

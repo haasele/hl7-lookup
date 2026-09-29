@@ -1,3 +1,4 @@
+// Highlight-rule dialog. Workspace opens it from Tools; the editor paints the hits.
 package hl7lookup.highlighting
 
 import androidx.compose.foundation.background
@@ -35,14 +36,21 @@ import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 import hl7lookup.theme.Theme
 
+// Facade for highlight hits and colors. Workspace paints story, grid and list from it.
 object Highlights {
+    // Collects hits for enabled rules. Workspace and Highlights.color call it.
     fun hits(rules: List<HighlightRule>, message: ParsedMessage): List<HighlightHit> = hitsFor(rules, message)
+    // Color for a path from hits. Story and grid ask Highlights.color for marks.
     fun color(hits: List<HighlightHit>, path: FieldPath): Color? = colorAt(hits, path)?.let(Theme::highlight)
+    // First hit color for a whole message. The message list paints rows with it.
     fun messageColor(rules: List<HighlightRule>, text: String): Color? = hl7lookup.highlighting.messageColor(rules, text)?.let(Theme::highlight)
+    // True when a field spec parses. HighlightDialog and Interfaces enable add when valid.
     fun valid(spec: String): Boolean = isValidSpec(spec)
+    // Exposes highlight wording. Workspace reads it via tr().
     fun texts() = HighlightTexts
 }
 
+// Dialog to add and toggle highlight rules. Workspace opens it from Tools.
 @Composable
 fun HighlightDialog(state: HighlightState, newId: () -> String, suggestion: String?, onDismiss: () -> Unit) {
     val palette = LocalPalette.current
@@ -77,6 +85,7 @@ fun HighlightDialog(state: HighlightState, newId: () -> String, suggestion: Stri
     }
 }
 
+// Row of highlight color dots. HighlightDialog and Interfaces pick a color with it.
 @Composable
 fun ColorChoice(selected: Int, onSelect: (Int) -> Unit) {
     val palette = LocalPalette.current

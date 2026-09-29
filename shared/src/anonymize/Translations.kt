@@ -1,7 +1,9 @@
+// Anonymise wording. anonymize/Index reads it.
 package hl7lookup.anonymize
 
 import hl7lookup.i18n.Text
 
+// Anonymize dialog wording. anonymize/Index reads it via texts().
 object AnonymizeTexts {
     val menu = Text("Anonymize", "Anonymisieren")
     val current = Text("Anonymize current message…", "Aktuelle Nachricht anonymisieren…")

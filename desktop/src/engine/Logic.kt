@@ -1,3 +1,4 @@
+// HAPI parse, validate, acknowledgement and dictionary build. engine/Index exposes it.
 package hl7lookup.desktop.engine
 
 import ca.uhn.hl7v2.AcknowledgmentCode
@@ -43,6 +44,7 @@ import java.util.IdentityHashMap
 import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 
+// Holds HAPI parse/validate contexts and the dictionary cache. HapiEngine owns one instance.
 internal class HapiRuntime {
     val parsing: HapiContext = DefaultHapiContext().apply {
         validationContext = ValidationContextFactory.noValidation()
@@ -58,12 +60,15 @@ internal class HapiRuntime {
 
 private val componentGetter = Regex("^get([A-Z][A-Za-z]*?)(\\d+)_(\\w+)$")
 
+// Lists HAPI Version values as strings. HapiEngine.versions and version matching call it.
 internal fun availableVersions(): List<String> = Version.availableVersions().map { it.version }
 
+// Resolves a raw version string to a HAPI Version. dictionary and create helpers call it.
 internal fun versionOf(raw: String): Version =
     Version.versionOf(raw) ?: Version.versionOf(Engines.matchVersion(raw, availableVersions()) ?: Engines.defaultVersion())
     ?: error("HL7 version $raw is not available")
 
+// Reflects public concrete classes in a HAPI model package. buildDictionary scans segments and messages with it.
 internal fun classesIn(packageName: String): List<Class<*>> {
     val path = packageName.replace('.', '/')
     val loader = HapiRuntime::class.java.classLoader
@@ -83,12 +88,14 @@ internal fun classesIn(packageName: String): List<Class<*>> {
         .filter { !Modifier.isAbstract(it.modifiers) && Modifier.isPublic(it.modifiers) }
 }
 
+// Reads a HAPI Type table number as a four-digit id. datatypeDefOf and segmentDefOf call it.
 internal fun tableNumberOf(type: Type?): String? {
     if (type == null) return null
     val number = runCatching { type.javaClass.getMethod("getTable").invoke(type) as? Int }.getOrNull() ?: return null
     return if (number > 0) Tables.id(number) else null
 }
 
+// Maps composite component indexes to humanized getter names. datatypeDefOf calls it.
 internal fun componentNames(composite: Composite): Map<Int, String> =
     composite.javaClass.methods.asSequence()
         .filter { it.parameterCount == 0 }
@@ -97,8 +104,10 @@ internal fun componentNames(composite: Composite): Map<Int, String> =
 
 private val hapiDatatypeAliases = mapOf("TSComponentOne" to "DTM")
 
+// Aliases odd HAPI datatype class names to HL7 names. datatypeDefOf calls it.
 internal fun datatypeName(hapiName: String): String = hapiDatatypeAliases[hapiName] ?: hapiName
 
+// Builds a DatatypeDef from a HAPI Type. buildDictionary and segmentDefOf call it.
 internal fun datatypeDefOf(type: Type): DatatypeDef {
     val components = if (type is Composite) {
         val names = componentNames(type)
@@ -109,6 +118,7 @@ internal fun datatypeDefOf(type: Type): DatatypeDef {
     return DatatypeDef(type.name, Catalog.datatype(type.name), components)
 }
 
+// Builds a SegmentDef from a HAPI segment, filling datatypes. buildDictionary calls it.
 internal fun segmentDefOf(segment: AbstractSegment, datatypes: MutableMap<String, DatatypeDef>): SegmentDef {
     val fields = segment.names.mapIndexed { i, name ->
         val number = i + 1
@@ -127,6 +137,7 @@ internal fun segmentDefOf(segment: AbstractSegment, datatypes: MutableMap<String
     return SegmentDef(segment.name, Catalog.segment(segment.name), fields)
 }
 
+// Walks a HAPI group into StructureElement nodes. buildDictionary calls it for message structures.
 internal fun structureElements(group: Group): List<StructureElement> = group.names.mapNotNull { name ->
     runCatching {
         val isGroup = group.isGroup(name)
@@ -136,12 +147,14 @@ internal fun structureElements(group: Group): List<StructureElement> = group.nam
     }.getOrNull()
 }
 
+// Loads HAPI event-to-structure properties for a version. buildDictionary stores it on the dictionary.
 internal fun eventMap(version: String): Map<String, String> {
     val stream = HapiRuntime::class.java.classLoader.getResourceAsStream("ca/uhn/hl7v2/parser/eventmap/$version.properties") ?: return emptyMap()
     val properties = Properties().apply { stream.use { load(it) } }
     return properties.stringPropertyNames().associateWith { properties.getProperty(it).trim() }
 }
 
+// Reflects HAPI models into an Hl7Dictionary. dictionaryFor caches the result.
 internal fun buildDictionary(runtime: HapiRuntime, raw: String): Hl7Dictionary {
     val version = versionOf(raw)
     val base = version.modelPackageName().trimEnd('.')
@@ -194,11 +207,13 @@ internal fun buildDictionary(runtime: HapiRuntime, raw: String): Hl7Dictionary {
     )
 }
 
+// Returns a cached dictionary for a version. HapiEngine.dictionary and warmUp call it.
 internal fun dictionaryFor(runtime: HapiRuntime, raw: String): Hl7Dictionary {
     val key = versionOf(raw).version
     return runtime.dictionaries.getOrPut(key) { buildDictionary(runtime, key) }
 }
 
+// Normalizes ER7 and fixes MSH-12 for HAPI parse. inspect, acknowledge and create call it.
 internal fun prepareWire(text: String, version: String?): String {
     val parsed = Er7.parse(Er7.normalize(text))
     if (parsed.isEmpty) return ""
@@ -214,12 +229,14 @@ internal fun prepareWire(text: String, version: String?): String {
     return Er7.toWire(adjusted)
 }
 
+// Maps a HAPI severity to the shared Severity enum. validationFindings calls it.
 internal fun severityOf(severity: ca.uhn.hl7v2.Severity?): Severity = when (severity) {
     ca.uhn.hl7v2.Severity.WARNING -> Severity.WARNING
     ca.uhn.hl7v2.Severity.INFO -> Severity.INFO
     else -> Severity.ERROR
 }
 
+// Flattens non-empty segments in message order. occurrenceIndex walks them.
 internal fun orderedSegments(group: Group, into: MutableList<Segment> = mutableListOf()): MutableList<Segment> {
     for (name in group.names) {
         val reps = runCatching { group.getAll(name) }.getOrNull() ?: continue
@@ -233,6 +250,7 @@ internal fun orderedSegments(group: Group, into: MutableList<Segment> = mutableL
     return into
 }
 
+// Maps each segment instance to its 1-based occurrence. findingAt uses it for positions.
 internal fun occurrenceIndex(message: Message): IdentityHashMap<Structure, Int> {
     val counts = mutableMapOf<String, Int>()
     val result = IdentityHashMap<Structure, Int>()
@@ -244,6 +262,7 @@ internal fun occurrenceIndex(message: Message): IdentityHashMap<Structure, Int> 
     return result
 }
 
+// Resolves a HAPI Location to a Segment. findingAt calls it for occurrence numbers.
 internal fun segmentAt(message: Message, location: Location): Segment? = runCatching {
     var group: Group = message
     for (step in location.groups) {
@@ -255,6 +274,7 @@ internal fun segmentAt(message: Message, location: Location): Segment? = runCatc
     candidates.getOrNull(location.segmentRepetition - 1) ?: candidates.getOrNull(location.segmentRepetition) ?: candidates.firstOrNull()
 }.getOrNull()
 
+// Builds an EngineFinding from a HAPI Location. inspect and validation helpers call it.
 internal fun findingAt(message: Message?, index: IdentityHashMap<Structure, Int>?, location: Location?, severity: Severity, text: String): EngineFinding {
     if (location == null || location.isUnknown || location.segmentName.isNullOrBlank()) return EngineFinding(severity, text)
     val occurrence = if (message != null && index != null) segmentAt(message, location)?.let { index[it] } else null
@@ -270,6 +290,7 @@ internal fun findingAt(message: Message?, index: IdentityHashMap<Structure, Int>
     )
 }
 
+// Checks required groups/segments and unexpected Z segments. inspectMessage calls it.
 internal fun structureFindings(group: Group, path: String, counts: MutableMap<String, Int>, into: MutableList<EngineFinding>) {
     val nonStandard = (group as? AbstractGroup)?.nonStandardNames.orEmpty()
     val choices = group.names.filter { runCatching { (group as? AbstractGroup)?.isChoiceElement(it) == true }.getOrDefault(false) }
@@ -307,14 +328,17 @@ internal fun structureFindings(group: Group, path: String, counts: MutableMap<St
     }
 }
 
+// Runs the HAPI DefaultValidator and maps exceptions. inspectMessage merges them in.
 internal fun validationFindings(runtime: HapiRuntime, message: Message, index: IdentityHashMap<Structure, Int>): List<EngineFinding> {
     val handler = object : CollectingValidationExceptionHandler<Unit>(runtime.validating) {
+        // Satisfies CollectingValidationExceptionHandler. validationFindings constructs the handler.
         override fun result() = Unit
     }
     runCatching { DefaultValidator<Unit>(runtime.validating).validate(message, handler) }
     return handler.exceptions.map { findingAt(message, index, it.location, severityOf(it.severity), it.messageWithoutLocation ?: it.message ?: "") }
 }
 
+// Parses wire text and collects structure plus validation findings. HapiEngine.inspect calls it.
 internal fun inspectMessage(runtime: HapiRuntime, request: InspectRequest): InspectReport {
     val wire = prepareWire(request.text, request.version)
     if (wire.isBlank()) return InspectReport()
@@ -332,9 +356,11 @@ internal fun inspectMessage(runtime: HapiRuntime, request: InspectRequest): Insp
     return InspectReport(message.name, findings)
 }
 
+// Parses an ACK code string into AcknowledgmentCode. acknowledge calls it.
 internal fun acknowledgementCode(code: String): AcknowledgmentCode =
     runCatching { AcknowledgmentCode.valueOf(code.uppercase()) }.getOrDefault(AcknowledgmentCode.AA)
 
+// Generates an ACK via HAPI or fallbackAck. HapiEngine.acknowledge calls it.
 internal fun acknowledge(runtime: HapiRuntime, request: AckRequest): String {
     val wire = prepareWire(request.text, null)
     val ack = runCatching {
@@ -346,6 +372,7 @@ internal fun acknowledge(runtime: HapiRuntime, request: AckRequest): String {
     return Er7.normalize(ack)
 }
 
+// Builds a minimal MSA ACK when HAPI encode fails. acknowledge falls back to it.
 internal fun fallbackAck(wire: String, code: String, errorText: String?): String {
     val parsed = Er7.parse(Er7.normalize(wire))
     val header = Er7.header(parsed)
@@ -363,6 +390,7 @@ internal fun fallbackAck(wire: String, code: String, errorText: String?): String
     return "$msh\r$msa\r"
 }
 
+// Creates a skeleton HL7 message with MSH filled. HapiEngine.create calls it.
 internal fun createMessage(runtime: HapiRuntime, request: CreateRequest): String {
     val message = runtime.parsing.newMessage(request.messageType, request.event, versionOf(request.version))
     runCatching {

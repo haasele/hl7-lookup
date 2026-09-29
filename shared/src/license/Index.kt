@@ -1,3 +1,4 @@
+// Third-party notice dialog. Workspace opens it from the menu.
 package hl7lookup.license
 
 import androidx.compose.foundation.layout.Arrangement
@@ -13,11 +14,15 @@ import hl7lookup.platform.LocalPlatform
 import hl7lookup.platform.PlatformKind
 import hl7lookup.theme.LocalPalette
 
+// Facade for third-party component list and wording. Workspace and LicenseDialog use it.
 object Licenses {
+    // Filters components for desktop vs browser. LicenseDialog lists what this returns.
     fun components(desktop: Boolean): List<Component> = componentsFor(thirdParty, desktop)
+    // Hands out LicenseTexts. Feature screens that need labels use this.
     fun texts() = LicenseTexts
 }
 
+// Modal listing app notice and third-party credits. Workspace opens it from the menu.
 @Composable
 fun LicenseDialog(appVersion: String, onDismiss: () -> Unit) {
     val palette = LocalPalette.current

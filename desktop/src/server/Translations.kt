@@ -1,7 +1,9 @@
+// Startup lines printed by the window. server/Index reads them.
 package hl7lookup.desktop.server
 
 import hl7lookup.i18n.Text
 
+// Holds console messages for server start, missing bundle and headless mode. Servers.texts exposes them.
 object ServerTexts {
     val started = Text("HL7 Lookup server on {0}", "HL7-Lookup-Server auf {0}")
     val noBundle = Text("Web client bundle not found. Build it with: ./kotlin build -m web", "Web-Client nicht gefunden. Bauen mit: ./kotlin build -m web")

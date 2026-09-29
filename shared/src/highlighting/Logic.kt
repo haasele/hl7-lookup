@@ -1,3 +1,4 @@
+// Which spans a rule paints. highlighting/Index calls Highlights.
 package hl7lookup.highlighting
 
 import androidx.compose.runtime.mutableStateListOf
@@ -10,6 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
+// One saved highlight rule. HighlightState stores these; hitsFor matches them.
 @Serializable
 data class HighlightRule(
     val id: String,
@@ -20,20 +22,25 @@ data class HighlightRule(
     val source: String? = null,
 )
 
+// A path that matched a rule plus its color. hitsFor builds these for painting.
 data class HighlightHit(val path: FieldPath, val color: Int)
 
 private val rulesJson = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 private val rulesKey get() = Platforms.key("highlights", "v1")
 
+// Loads persisted rules from the platform. HighlightState seeds its list from it.
 internal fun loadRules(platform: Platform): List<HighlightRule> =
     platform.loadValue(rulesKey)?.let { runCatching { rulesJson.decodeFromString(ListSerializer(HighlightRule.serializer()), it) }.getOrNull() }.orEmpty()
 
+// Stores user rules on the platform. HighlightState.save writes through it.
 internal fun saveRules(platform: Platform, rules: List<HighlightRule>) =
     platform.storeValue(rulesKey, rulesJson.encodeToString(ListSerializer(HighlightRule.serializer()), rules))
 
+// True when Er7 can parse the field spec. Highlights.valid and HighlightDialog call it.
 internal fun isValidSpec(spec: String): Boolean = Er7.spec(spec.trim().uppercase()) != null
 
+// Matches enabled rules against a message. Highlights.hits and messageColor call it.
 internal fun hitsFor(rules: List<HighlightRule>, message: ParsedMessage): List<HighlightHit> {
     val hits = mutableListOf<HighlightHit>()
     for (rule in rules) {
@@ -57,6 +64,7 @@ internal fun hitsFor(rules: List<HighlightRule>, message: ParsedMessage): List<H
     return hits
 }
 
+// Picks the last hit color covering a path. Highlights.color delegates to it.
 internal fun colorAt(hits: List<HighlightHit>, path: FieldPath): Int? =
     hits.lastOrNull { hit ->
         hit.path.segment == path.segment &&
@@ -66,26 +74,32 @@ internal fun colorAt(hits: List<HighlightHit>, path: FieldPath): Int? =
             (hit.path.subcomponent == 0 || hit.path.subcomponent == path.subcomponent)
     }?.color
 
+// First hit color for parsed text. Highlights.messageColor delegates to it.
 internal fun messageColor(rules: List<HighlightRule>, text: String): Int? {
     if (rules.none { it.enabled }) return null
     return hitsFor(rules, Er7.parse(text)).firstOrNull()?.color
 }
 
+// Mutable rule list with persistence. Workspace owns it and opens HighlightDialog on it.
 class HighlightState(private val platform: Platform) {
     val rules = mutableStateListOf<HighlightRule>().apply { addAll(loadRules(platform)) }
 
+    // Persists user-owned rules. add, remove, toggle and clear call it after edits.
     private fun save() = saveRules(platform, rules.filter { it.source == null })
 
+    // Appends a rule and saves. HighlightDialog Add calls it.
     fun add(rule: HighlightRule) {
         rules += rule
         save()
     }
 
+    // Drops a rule by id and saves. HighlightDialog trash calls it.
     fun remove(id: String) {
         rules.removeAll { it.id == id }
         save()
     }
 
+    // Flips enabled and saves. HighlightDialog checkbox calls it.
     fun toggle(id: String) {
         val index = rules.indexOfFirst { it.id == id }
         if (index >= 0) {
@@ -94,11 +108,13 @@ class HighlightState(private val platform: Platform) {
         }
     }
 
+    // Replaces rules tagged with a source. Workspace syncs interface highlights through it.
     fun replaceFromSource(source: String, next: List<HighlightRule>) {
         rules.removeAll { it.source == source }
         rules.addAll(next.map { it.copy(source = source) })
     }
 
+    // Removes user rules and saves. HighlightDialog clear calls it.
     fun clear() {
         rules.removeAll { it.source == null }
         save()

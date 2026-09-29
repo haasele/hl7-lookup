@@ -1,3 +1,4 @@
+// Pane arrangement and presets. Workspace splits the screen through Layouts.
 package hl7lookup.layout
 
 import androidx.compose.foundation.border
@@ -27,14 +28,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+// Entry point for pane trees and presets; Workspace calls it, methods forward to Logic.
 object Layouts {
+    // Builds persisted layout state for a host; Workspace calls this, it constructs LayoutState.
     fun state(platform: Platform): LayoutState = LayoutState(platform)
+    // Returns the default split tree; Workspace and resets call this, it forwards to standardLayout.
     fun standard(): LayoutNode = standardLayout()
+    // Exchanges two pane ids in a tree; callers use this, it forwards to swapPanes.
     fun swap(root: LayoutNode, from: String, to: String): LayoutNode = swapPanes(root, from, to)
+    // Lists leaf pane ids under a root; callers use this, it forwards to paneNames.
     fun panes(root: LayoutNode): List<String> = paneNames(root)
+    // Exposes layout menu wording; screens call this, it returns LayoutTexts.
     fun texts() = LayoutTexts
 }
 
+// Renders the full split tree into pane content; Workspace composes this, it calls LayoutBranch.
 @Composable
 fun Workbench(state: LayoutState, panes: Map<String, @Composable () -> Unit>, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxSize()) {
@@ -42,6 +50,7 @@ fun Workbench(state: LayoutState, panes: Map<String, @Composable () -> Unit>, mo
     }
 }
 
+// Walks one split or leaf and draws SplitPane or PaneFrame; Workbench recurses through it.
 @Composable
 private fun LayoutBranch(state: LayoutState, node: LayoutNode, path: String, panes: Map<String, @Composable () -> Unit>) {
     val pane = node.pane
@@ -62,6 +71,7 @@ private fun LayoutBranch(state: LayoutState, node: LayoutNode, path: String, pan
     )
 }
 
+// Hosts one pane with drag-drop move and drop highlight; LayoutBranch wraps content with it.
 @Composable
 private fun PaneFrame(state: LayoutState, id: String, content: @Composable () -> Unit) {
     val palette = LocalPalette.current
@@ -83,6 +93,7 @@ private fun PaneFrame(state: LayoutState, id: String, content: @Composable () ->
     }
 }
 
+// Menu for reset, save and applying presets; Workspace shows it, it calls LayoutState.
 @Composable
 fun LayoutMenu(state: LayoutState) {
     val texts = LayoutTexts
@@ -96,6 +107,7 @@ fun LayoutMenu(state: LayoutState) {
     MenuButton(tr(texts.menu), entries)
 }
 
+// Dialog to name or remove a layout preset; Workspace shows it when naming is true.
 @Composable
 fun LayoutPresetDialog(state: LayoutState) {
     if (!state.naming) return

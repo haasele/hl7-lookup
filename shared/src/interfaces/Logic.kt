@@ -1,3 +1,4 @@
+// Required fields, expected values and custom tables. interfaces/Index and workspace call Interfaces.
 package hl7lookup.interfaces
 
 import androidx.compose.runtime.mutableStateListOf
@@ -16,9 +17,11 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
+// Kinds of interface rules. InterfaceRule and the editor dropdown use these.
 @Serializable
 enum class RuleKind { REQUIRED, EXPECTED, DATE, TABLE, HIGHLIGHT }
 
+// One required, expected, date, table or highlight rule. InterfaceDefinition stores these.
 @Serializable
 data class InterfaceRule(
     val id: String,
@@ -29,9 +32,11 @@ data class InterfaceRule(
     val color: Int = 0,
 )
 
+// Custom code table for an interface. InterfaceDefinition stores these; tableOf wraps them.
 @Serializable
 data class CustomTable(val id: String, val name: String, val entries: List<TableEntry> = emptyList())
 
+// Named interface with type, rules and tables. InterfaceStore persists these.
 @Serializable
 data class InterfaceDefinition(
     val id: String,
@@ -45,28 +50,34 @@ data class InterfaceDefinition(
     val tables: List<CustomTable> = emptyList(),
 )
 
+// JSON wrapper for export files. encodeFile and decodeFile read and write it.
 @Serializable
 data class InterfaceFile(val format: String = "hl7lookup-interfaces", val revision: Int = 1, val interfaces: List<InterfaceDefinition>)
 
+// Per-message error and warning counts. runOnList returns these for the dialog.
 data class ListResult(val index: Int, val controlId: String, val errors: Int, val warnings: Int)
 
 private val interfaceJson = Json { ignoreUnknownKeys = true; encodeDefaults = true; prettyPrint = true }
 
 private val interfacesKey get() = Platforms.key("interfaces", "v1")
 
+// JSON-encodes definitions as an interface file. Interfaces.encode delegates to it.
 internal fun encodeFile(definitions: List<InterfaceDefinition>): String =
     interfaceJson.encodeToString(InterfaceFile.serializer(), InterfaceFile(interfaces = definitions))
 
+// Parses a file or single definition. Interfaces.decode delegates to it.
 internal fun decodeFile(content: String): List<InterfaceDefinition>? =
     runCatching { interfaceJson.decodeFromString(InterfaceFile.serializer(), content).interfaces }.getOrNull()
         ?: runCatching { listOf(interfaceJson.decodeFromString(InterfaceDefinition.serializer(), content)) }.getOrNull()
 
+// Wraps a custom table as TableDef. Interfaces.table and specTable call it.
 internal fun tableOf(definition: InterfaceDefinition?, id: String?): TableDef? {
     if (definition == null || id == null) return null
     val table = definition.tables.firstOrNull { it.id == id } ?: return null
     return TableDef(table.id, table.name, table.entries)
 }
 
+// Parses CODE=Description lines. InterfaceEditor saves table text through it.
 internal fun parseEntries(text: String): List<TableEntry> = text.lines().mapNotNull { line ->
     val trimmed = line.trim()
     if (trimmed.isEmpty()) return@mapNotNull null
@@ -74,11 +85,14 @@ internal fun parseEntries(text: String): List<TableEntry> = text.lines().mapNotN
     if (separator == null) TableEntry(trimmed, "") else TableEntry(trimmed.substringBefore(separator).trim(), trimmed.substringAfter(separator).trim())
 }
 
+// Formats table entries for the text box. InterfaceEditor seeds the editor from it.
 internal fun formatEntries(entries: List<TableEntry>): String = entries.joinToString("\n") { if (it.description.isEmpty()) it.code else "${it.code}=${it.description}" }
 
+// Maps HIGHLIGHT rules to HighlightRule. Interfaces.highlights and Workspace call it.
 internal fun highlightRulesOf(definition: InterfaceDefinition?): List<HighlightRule> =
     definition?.rules.orEmpty().filter { it.kind == RuleKind.HIGHLIGHT }.map { HighlightRule("if-${it.id}", it.spec, it.value, it.color) }
 
+// Checks type and field rules on a message. Interfaces.findings and runOnList call it.
 internal fun applyInterface(definition: InterfaceDefinition?, message: ParsedMessage): List<Finding> {
     if (definition == null || message.isEmpty) return emptyList()
     val findings = mutableListOf<Finding>()
@@ -124,6 +138,7 @@ internal fun applyInterface(definition: InterfaceDefinition?, message: ParsedMes
     return findings
 }
 
+// Custom table bound to the caret path. Interfaces.tableAt delegates to it.
 internal fun specTable(definition: InterfaceDefinition?, message: ParsedMessage, path: hl7lookup.document.FieldPath): TableDef? {
     if (definition == null) return null
     val spec = Er7.spec(message, path) ?: return null
@@ -133,12 +148,14 @@ internal fun specTable(definition: InterfaceDefinition?, message: ParsedMessage,
     return tableOf(definition, rule.table)
 }
 
+// Runs applyInterface over every list text. Interfaces.check and the dialog call it.
 internal fun runOnList(definition: InterfaceDefinition, texts: List<String>): List<ListResult> = texts.mapIndexed { index, text ->
     val message = Er7.parse(text)
     val findings = applyInterface(definition, message)
     ListResult(index, Er7.header(message).controlId, findings.count { it.severity == Severity.ERROR }, findings.count { it.severity == Severity.WARNING })
 }
 
+// Drafts required rules from common fields. Interfaces.draft and New from message call it.
 internal fun draftFrom(id: String, name: String, message: ParsedMessage, ruleId: () -> String): InterfaceDefinition {
     val header = Er7.header(message)
     val rules = listOf("MSH-9", "MSH-10", "MSH-12", "PID-3", "PID-5").filter { Er7.value(message, it).isNotBlank() }
@@ -146,26 +163,32 @@ internal fun draftFrom(id: String, name: String, message: ParsedMessage, ruleId:
     return InterfaceDefinition(id, name, "", header.type, header.event, header.structure, header.version, rules)
 }
 
+// Persisted list of interface definitions. Workspace owns it for the manage dialog.
 class InterfaceStore(private val platform: Platform) {
     val items = mutableStateListOf<InterfaceDefinition>().apply {
         addAll(platform.loadValue(interfacesKey)?.let { runCatching { interfaceJson.decodeFromString(ListSerializer(InterfaceDefinition.serializer()), it) }.getOrNull() }.orEmpty())
     }
 
+    // Writes the item list to the platform. upsert, remove and import call it.
     private fun save() = platform.storeValue(interfacesKey, interfaceJson.encodeToString(ListSerializer(InterfaceDefinition.serializer()), items.toList()))
 
+    // Inserts or replaces a definition and saves. InterfacesDialog edits call it.
     fun upsert(definition: InterfaceDefinition) {
         val index = items.indexOfFirst { it.id == definition.id }
         if (index >= 0) items[index] = definition else items += definition
         save()
     }
 
+    // Drops a definition by id and saves. InterfacesDialog delete calls it.
     fun remove(id: String) {
         items.removeAll { it.id == id }
         save()
     }
 
+    // Finds a definition by id. InterfacesDialog and Workspace resolve the active one with it.
     fun get(id: String?): InterfaceDefinition? = items.firstOrNull { it.id == id }
 
+    // Upserts each imported definition. Import actions call it after decode.
     fun import(definitions: List<InterfaceDefinition>) {
         definitions.forEach(::upsert)
     }

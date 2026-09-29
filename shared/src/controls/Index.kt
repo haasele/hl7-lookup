@@ -1,3 +1,4 @@
+// Shared buttons, splits, menus and inputs. Feature screens compose these instead of raw widgets.
 package hl7lookup.controls
 
 import androidx.compose.animation.core.animateDpAsState
@@ -78,13 +79,19 @@ import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalMonoFont
 import hl7lookup.theme.LocalPalette
 
+// Shared button/label helpers and panel chrome. Feature screens compose these widgets.
 object Controls {
+    // Formats a share as a percent string. Callers reach Logic via this facade.
     fun percent(part: Int, total: Int): String = hl7lookup.controls.percent(part, total)
+    // Shortens long text with an ellipsis. Callers reach Logic via this facade.
     fun ellipsize(text: String, max: Int): String = hl7lookup.controls.ellipsize(text, max)
+    // Flattens newlines into a single display line. Callers reach Logic via this facade.
     fun oneLine(text: String): String = hl7lookup.controls.oneLine(text)
+    // Exposes Close/Cancel/Save wording. Screens read ControlTexts through this.
     fun texts() = ControlTexts
 }
 
+// Plain styled text used across panels. Buttons, headers and forms compose it.
 @Composable
 fun Label(
     text: String,
@@ -109,6 +116,7 @@ fun Label(
     )
 }
 
+// Draggable two-pane layout with a grip. Workspace and feature screens host first/second content.
 @Composable
 fun SplitPane(
     vertical: Boolean,
@@ -171,11 +179,13 @@ fun SplitPane(
     }
 }
 
+// Surface column chrome for a pane body. Feature screens wrap their content in it.
 @Composable
 fun Panel(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(modifier.background(LocalPalette.current.surface), content = content)
 }
 
+// Callbacks for dragging a pane to a new dock. Workspace provides them via LocalPaneMove.
 class PaneMove(
     val onDragStart: () -> Unit,
     val onDrag: (Offset) -> Unit,
@@ -185,6 +195,7 @@ class PaneMove(
 
 val LocalPaneMove: androidx.compose.runtime.ProvidableCompositionLocal<PaneMove?> = staticCompositionLocalOf { null }
 
+// Title bar with optional move grip and actions. Panels and tabs use it above content.
 @Composable
 fun PanelHeader(title: String, modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {}) {
     val palette = LocalPalette.current
@@ -210,6 +221,7 @@ fun PanelHeader(title: String, modifier: Modifier = Modifier, actions: @Composab
     }
 }
 
+// Attaches drag gestures that report root positions. PanelHeader and TabStrip apply it to the grip.
 @Composable
 private fun Modifier.paneDrag(move: PaneMove): Modifier {
     var coordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -233,6 +245,7 @@ private fun Modifier.paneDrag(move: PaneMove): Modifier {
         }
 }
 
+// Six-dot handle hinting a pane can be moved. PanelHeader and TabStrip draw it when LocalPaneMove is set.
 @Composable
 private fun MoveGrip(color: Color) {
     Canvas(Modifier.size(18.dp, 16.dp)) {
@@ -244,6 +257,7 @@ private fun MoveGrip(color: Color) {
     }
 }
 
+// Labeled button with optional icon and danger/primary styles. Dialogs and toolbars call it for actions.
 @Composable
 fun ActionButton(
     label: String,
@@ -278,6 +292,7 @@ fun ActionButton(
     }
 }
 
+// Compact clickable icon without a label. Headers, tabs and modals use it for close and tools.
 @Composable
 fun IconAction(shape: IconShape, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color? = null, enabled: Boolean = true, size: Dp = 14.dp) {
     val palette = LocalPalette.current
@@ -293,11 +308,13 @@ fun IconAction(shape: IconShape, onClick: () -> Unit, modifier: Modifier = Modif
     }
 }
 
+// Clickable accent-colored text. Forms and empty states use it for secondary actions.
 @Composable
 fun LinkText(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, size: TextUnit = 13.sp, mono: Boolean = false) {
     Label(text, modifier.clickable(onClick = onClick).pointerHoverIcon(PointerIcon.Hand), color = LocalPalette.current.link, size = size, mono = mono)
 }
 
+// Single or multi-line field with border and placeholder. Forms and search bars compose it.
 @Composable
 fun TextInput(
     value: String,
@@ -335,6 +352,7 @@ fun TextInput(
     )
 }
 
+// Popup list to pick one of several values. Settings and filter bars compose it.
 @Composable
 fun <T> Dropdown(
     selected: T,
@@ -372,8 +390,10 @@ fun <T> Dropdown(
     }
 }
 
+// One menu item, optionally nesting children. MenuButton walks these for nested menus.
 data class MenuEntry(val label: String, val enabled: Boolean = true, val children: List<MenuEntry> = emptyList(), val onClick: () -> Unit = {})
 
+// Top-bar menu that can drill into nested entries. Workspace menus and toolbars open it.
 @Composable
 fun MenuButton(title: String, entries: List<MenuEntry>, modifier: Modifier = Modifier, icon: IconShape? = null) {
     val palette = LocalPalette.current
@@ -420,6 +440,7 @@ fun MenuButton(title: String, entries: List<MenuEntry>, modifier: Modifier = Mod
     }
 }
 
+// Toggle switch with a sliding knob. Settings rows bind checked state through it.
 @Composable
 fun CheckOption(label: String, checked: Boolean, onChange: (Boolean) -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
@@ -443,6 +464,7 @@ fun CheckOption(label: String, checked: Boolean, onChange: (Boolean) -> Unit, mo
     }
 }
 
+// Scrollable tab bar with optional close and trailing slots. Editors and multi-doc panes host it.
 @Composable
 fun TabStrip(tabs: List<TabItem>, selected: String?, onSelect: (String) -> Unit, modifier: Modifier = Modifier, onClose: ((String) -> Unit)? = null, trailing: @Composable RowScope.() -> Unit = {}) {
     val palette = LocalPalette.current
@@ -471,6 +493,7 @@ fun TabStrip(tabs: List<TabItem>, selected: String?, onSelect: (String) -> Unit,
     }
 }
 
+// Small colored pill for counts or status. TabStrip and list rows show it beside a title.
 @Composable
 fun Badge(text: String, color: Color, modifier: Modifier = Modifier) {
     Box(modifier.clip(RoundedCornerShape(8.dp)).background(color.copy(alpha = 0.25f)).padding(horizontal = 6.dp, vertical = 1.dp)) {
@@ -478,6 +501,7 @@ fun Badge(text: String, color: Color, modifier: Modifier = Modifier) {
     }
 }
 
+// Centered placeholder with optional illustration and action. Empty panes and lists show it.
 @Composable
 fun EmptyState(
     text: String,
@@ -506,6 +530,7 @@ fun EmptyState(
     }
 }
 
+// Column titles across a table. Grid screens place it above TableRow content.
 @Composable
 fun TableHeader(columns: List<TableColumn>, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current
@@ -516,6 +541,7 @@ fun TableHeader(columns: List<TableColumn>, modifier: Modifier = Modifier) {
     }
 }
 
+// Selectable table line with shared padding and highlight. Lists fill cells via the content slot.
 @Composable
 fun TableRow(
     modifier: Modifier = Modifier,
@@ -533,6 +559,7 @@ fun TableRow(
     Row(base, verticalAlignment = Alignment.CenterVertically, content = content)
 }
 
+// Dialog shell with title, scrollable body and footer actions. Feature forms open it for edits.
 @Composable
 fun Modal(
     title: String,
@@ -563,6 +590,7 @@ fun Modal(
     }
 }
 
+// Label plus trailing field row for forms. Modals and settings screens stack these.
 @Composable
 fun FormRow(label: String, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -571,6 +599,7 @@ fun FormRow(label: String, modifier: Modifier = Modifier, content: @Composable R
     }
 }
 
+// Inline warning or status banner with icon. Forms and panels surface validation messages with it.
 @Composable
 fun Notice(text: String, color: Color, modifier: Modifier = Modifier, icon: IconShape = IconShape.Warning) {
     Row(
@@ -583,6 +612,7 @@ fun Notice(text: String, color: Color, modifier: Modifier = Modifier, icon: Icon
     }
 }
 
+// Thin filled bar showing completion from 0 to 1. Progress UIs bind a fraction into it.
 @Composable
 fun ProgressBar(fraction: Float, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current

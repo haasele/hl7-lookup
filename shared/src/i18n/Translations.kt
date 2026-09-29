@@ -1,3 +1,4 @@
+// Language names. i18n/Index reads them.
 package hl7lookup.i18n
 
 internal val languageNames = mapOf(

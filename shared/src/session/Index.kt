@@ -1,3 +1,4 @@
+// Open tabs and the current message. Workspace reads the session and persists it.
 package hl7lookup.session
 
 import androidx.compose.runtime.Composable
@@ -19,12 +20,17 @@ import hl7lookup.i18n.tr
 import hl7lookup.theme.IconShape
 import hl7lookup.controls.IconAction
 
+// Facade for tab file names and session wording. Workspace calls these helpers.
 object Sessions {
+    // Suggests a save name for a tab. Callers use it; it delegates to suggestedFileName.
     fun fileName(tab: DocumentTab): String = suggestedFileName(tab)
+    // Short display title from a path. Callers use it; it delegates to fileTitle.
     fun title(path: String): String = fileTitle(path)
+    // Hands out SessionTexts. Workspace and Index read labels through this.
     fun texts() = SessionTexts
 }
 
+// Tab strip for open documents with rename. Workspace embeds it; it drives SessionState and Modal.
 @Composable
 fun DocumentTabs(state: SessionState, onNewTab: () -> Unit, modifier: Modifier = Modifier) {
     var renaming by remember { mutableStateOf<String?>(null) }
@@ -50,5 +56,6 @@ fun DocumentTabs(state: SessionState, onNewTab: () -> Unit, modifier: Modifier =
     }
 }
 
+// Pluralized message-count label for the UI. Workspace calls it; it reads SessionTexts via I18n.
 @Composable
 fun messageCountLabel(count: Int): String = tr(I18n.plural(count.toLong(), SessionTexts.messageCount, SessionTexts.messagesCount), count)

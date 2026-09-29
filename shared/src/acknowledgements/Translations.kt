@@ -1,7 +1,9 @@
+// ACK wording. acknowledgements/Index reads it.
 package hl7lookup.acknowledgements
 
 import hl7lookup.i18n.Text
 
+// English and German strings for the ACK panel. Index reads them via tr().
 object AckTexts {
     val title = Text("ACKs", "ACKs")
     val empty = Text("Acknowledgements of sent and received messages appear here.", "Quittungen gesendeter und empfangener Nachrichten erscheinen hier.")

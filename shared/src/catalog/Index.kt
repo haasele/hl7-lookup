@@ -1,3 +1,4 @@
+// Wiki for message types and segments. Workspace opens it from the navbar.
 package hl7lookup.catalog
 
 import androidx.compose.foundation.HorizontalScrollbar
@@ -63,21 +64,32 @@ import hl7lookup.theme.LocalMonoFont
 import hl7lookup.theme.LocalPalette
 import hl7lookup.theme.Theme
 
+// Facade for wiki types, guides and segments. Workspace and CatalogTest call it.
 object Catalog {
+    // Lists message types with their events. WikiScreen and the facade call it.
     fun types(dictionary: Hl7Dictionary): List<WikiType> = wikiTypes(dictionary)
+    // Filters types and events by search text. WikiScreen and the facade call it.
     fun matching(types: List<WikiType>, query: String): List<WikiType> = filterWiki(types, query)
+    // Flattens a structure into outline lines. Tests and the facade call it.
     fun outline(dictionary: Hl7Dictionary, structure: String): List<WikiLine> = wikiOutline(dictionary, structure)
+    // Builds the labeled guide message. WikiScreen and the facade call it.
     fun guide(dictionary: Hl7Dictionary, type: String, event: String, structure: String, german: Boolean = false): String =
         wikiGuide(dictionary, type, event, structure, german)
+    // Picks a sample or fakes one for the event. WikiScreen and the facade call it.
     fun example(dictionary: Hl7Dictionary, type: String, event: String, structure: String, samples: List<String>): String =
         wikiExample(dictionary, type, event, structure, samples)
+    // Lists segments with field pieces. WikiScreen and the facade call it.
     fun segments(dictionary: Hl7Dictionary): List<WikiSegmentView> = wikiSegments(dictionary)
+    // Filters segments by search text. WikiScreen and the facade call it.
     fun matchingSegments(segments: List<WikiSegmentView>, query: String): List<WikiSegmentView> = filterSegments(segments, query)
+    // Exposes wiki wording. Workspace reads it via tr().
     fun texts() = CatalogTexts
 }
 
+// Whether the wiki shows types or segments. WikiScreen toggles between them.
 private enum class WikiBrowse { TYPES, SEGMENTS }
 
+// Full-screen wiki for types, events and segments. Workspace opens it from the navbar.
 @Composable
 fun WikiScreen(
     dictionary: Hl7Dictionary?,
@@ -233,6 +245,7 @@ fun WikiScreen(
     }
 }
 
+// Selectable path chip in the wiki top bar. WikiScreen uses it for Types and Segments.
 @Composable
 private fun PathChip(label: String, selected: Boolean, count: Int?, onClick: () -> Unit) {
     val palette = LocalPalette.current
@@ -251,6 +264,7 @@ private fun PathChip(label: String, selected: Boolean, count: Int?, onClick: () 
     )
 }
 
+// Cross-links when search also hits the other path. WikiScreen shows it under the bar.
 @Composable
 private fun SearchSwitch(title: String, names: List<String>, onPick: (String) -> Unit) {
     val palette = LocalPalette.current
@@ -277,6 +291,7 @@ private fun SearchSwitch(title: String, names: List<String>, onPick: (String) ->
     }
 }
 
+// Expandable segment list with field pieces. WikiScreen shows it on the Segments path.
 @Composable
 private fun ColumnScope.SegmentBrowser(segments: List<WikiSegmentView>, selectedName: String?, query: String, german: Boolean, onSelect: (String) -> Unit) {
     val palette = LocalPalette.current
@@ -342,6 +357,7 @@ private fun ColumnScope.SegmentBrowser(segments: List<WikiSegmentView>, selected
     }
 }
 
+// Scrollable ER7 text with syntax colors. WikiScreen shows guide and example here.
 @Composable
 private fun HighlightedMessage(text: String, modifier: Modifier) {
     val palette = LocalPalette.current
@@ -386,6 +402,7 @@ private fun HighlightedMessage(text: String, modifier: Modifier) {
     }
 }
 
+// Scrollbar colors from the palette. HighlightedMessage and WikiColumn share it.
 @Composable
 private fun scrollbarStyle(): ScrollbarStyle {
     val palette = LocalPalette.current
@@ -399,6 +416,7 @@ private fun scrollbarStyle(): ScrollbarStyle {
     )
 }
 
+// Titled scrolling column for types or events. WikiScreen lays out the three panes with it.
 @Composable
 private fun WikiColumn(title: String, modifier: Modifier, content: @Composable () -> Unit) {
     val palette = LocalPalette.current

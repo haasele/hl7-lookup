@@ -1,3 +1,4 @@
+// Type, event and segment explanations plus the guide message. catalog/Index and CatalogTest call Catalog.
 package hl7lookup.catalog
 
 import hl7lookup.dictionary.Hl7Dictionary
@@ -5,14 +6,19 @@ import hl7lookup.dictionary.SegmentDef
 import hl7lookup.dictionary.StructureElement
 import hl7lookup.document.Er7
 
+// Message type with its events. wikiTypes builds these for the type list.
 data class WikiType(val type: String, val description: String, val events: List<WikiEvent>)
 
+// One trigger event under a type. wikiTypes fills them from structures and events.
 data class WikiEvent(val code: String, val description: String, val structure: String)
 
+// One field or component row in a segment view. segmentPieces builds these.
 data class WikiPiece(val code: String, val purposeEn: String, val purposeDe: String, val example: String)
 
+// Segment with plain description and pieces. wikiSegments builds the Segments path list.
 data class WikiSegmentView(val name: String, val descriptionEn: String, val descriptionDe: String, val pieces: List<WikiPiece>)
 
+// One outline line for structure walk. walkStructure appends these for wikiOutline.
 data class WikiLine(
     val depth: Int,
     val code: String,
@@ -23,8 +29,10 @@ data class WikiLine(
     val table: String?,
 )
 
+// Groups structures into types and events. Catalog.types and WikiScreen call it.
 internal fun wikiTypes(dictionary: Hl7Dictionary): List<WikiType> {
     val eventsByType = linkedMapOf<String, MutableMap<String, WikiEvent>>()
+    // Gets or creates the event map for a type. wikiTypes uses it while scanning structures.
     fun bucket(type: String) = eventsByType.getOrPut(type) { linkedMapOf() }
     dictionary.messageTypes.keys.forEach { bucket(it) }
     dictionary.structures.keys.forEach { name ->
@@ -49,12 +57,14 @@ internal fun wikiTypes(dictionary: Hl7Dictionary): List<WikiType> {
         .sortedBy { it.type }
 }
 
+// Sorts event codes with padded numbers. wikiTypes sorts events with it.
 private fun eventOrder(code: String): String {
     val prefix = code.takeWhile { !it.isDigit() }
     val number = code.dropWhile { !it.isDigit() }.toIntOrNull() ?: 0
     return prefix + number.toString().padStart(4, '0')
 }
 
+// Keeps types and events that match a query. Catalog.matching and WikiScreen call it.
 internal fun filterWiki(types: List<WikiType>, query: String): List<WikiType> {
     val needle = query.trim()
     if (needle.isEmpty()) return types
@@ -72,6 +82,7 @@ internal fun filterWiki(types: List<WikiType>, query: String): List<WikiType> {
     }
 }
 
+// Walks a structure into indented lines. Catalog.outline delegates to it.
 internal fun wikiOutline(dictionary: Hl7Dictionary, structure: String): List<WikiLine> {
     val elements = dictionary.structures[structure]?.elements ?: return emptyList()
     val lines = mutableListOf<WikiLine>()
@@ -79,6 +90,7 @@ internal fun wikiOutline(dictionary: Hl7Dictionary, structure: String): List<Wik
     return lines
 }
 
+// Builds a guide message with field labels. Catalog.guide and WikiScreen call it.
 internal fun wikiGuide(dictionary: Hl7Dictionary, type: String, event: String, structure: String, german: Boolean = false): String {
     val segments = guideSegments(dictionary, structure)
     return segments.joinToString("\n") { segment ->
@@ -86,6 +98,7 @@ internal fun wikiGuide(dictionary: Hl7Dictionary, type: String, event: String, s
     }
 }
 
+// Finds a matching sample or fakes segments. Catalog.example and WikiScreen call it.
 internal fun wikiExample(dictionary: Hl7Dictionary, type: String, event: String, structure: String, samples: List<String>): String {
     val match = samples.firstOrNull { text ->
         val header = Er7.header(Er7.parse(text))
@@ -96,6 +109,7 @@ internal fun wikiExample(dictionary: Hl7Dictionary, type: String, event: String,
     return names.map { fakeLine(it, type, event, structure, dictionary.version) }.joinToString("\n")
 }
 
+// Recurses groups and fields into WikiLines. wikiOutline walks each structure element with it.
 private fun walkStructure(dictionary: Hl7Dictionary, element: StructureElement, depth: Int, into: MutableList<WikiLine>) {
     if (element.group) {
         into += WikiLine(depth, "", element.name, "", element.required, element.repeating, null)
@@ -120,10 +134,13 @@ private fun walkStructure(dictionary: Hl7Dictionary, element: StructureElement, 
     }
 }
 
+// Segment name plus required flag for the guide. guideSegments collects these.
 private data class GuideSegment(val name: String, val required: Boolean)
 
+// Picks required or first segments for the guide. wikiGuide asks it for the segment list.
 private fun guideSegments(dictionary: Hl7Dictionary, structure: String): List<GuideSegment> {
     val found = mutableListOf<GuideSegment>()
+    // Collects segment names from a structure tree. guideSegments walks elements with it.
     fun walk(element: StructureElement) {
         if (element.group) element.children.forEach(::walk)
         else if (element.name.length == 3 && found.none { it.name == element.name }) found += GuideSegment(element.name, element.required)
@@ -134,6 +151,7 @@ private fun guideSegments(dictionary: Hl7Dictionary, structure: String): List<Gu
     return if (required.size >= 2) required else found.take(8)
 }
 
+// Builds the labeled MSH guide line. wikiGuide uses it for the header segment.
 private fun mshGuide(dictionary: Hl7Dictionary, type: String, event: String, structure: String, german: Boolean): String {
     val numbers = chosenNumbers(dictionary, "MSH") + 9
     val max = numbers.maxOrNull() ?: 9
@@ -146,6 +164,7 @@ private fun mshGuide(dictionary: Hl7Dictionary, type: String, event: String, str
     return "MSH|^~\\&|$values"
 }
 
+// Builds a labeled guide line for one segment. wikiGuide maps each segment through it.
 private fun segmentGuide(dictionary: Hl7Dictionary, name: String, german: Boolean): String {
     val numbers = chosenNumbers(dictionary, name)
     if (numbers.isEmpty()) return name
@@ -156,20 +175,24 @@ private fun segmentGuide(dictionary: Hl7Dictionary, name: String, german: Boolea
     return "$name|$values"
 }
 
+// Picks required and plain field numbers. mshGuide and segmentGuide fill only those.
 private fun chosenNumbers(dictionary: Hl7Dictionary, segment: String): Set<Int> {
     val fields = dictionary.segments[segment]?.fields.orEmpty()
     val chosen = fields.filter { it.required || plainField(segment, it.number) != null }.map { it.number }
     return if (chosen.isNotEmpty()) chosen.toSet() else fields.take(6).map { it.number }.toSet()
 }
 
+// Plain or simplified field label for the guide. mshGuide and segmentGuide call it.
 private fun fieldLabel(dictionary: Hl7Dictionary, segment: String, number: Int, german: Boolean): String {
     plainField(segment, number)?.let { return if (german) it.de else it.en }
     val official = dictionary.segments[segment]?.fields?.firstOrNull { it.number == number }?.name.orEmpty()
     return phrase(simplifyField(official, german))
 }
 
+// English and German plain field labels. plainFields stores these; plainField looks them up.
 private data class Plain(val en: String, val de: String)
 
+// Looks up a hard-coded plain field label. fieldLabel prefers it over the dictionary name.
 private fun plainField(segment: String, number: Int): Plain? = plainFields["$segment-$number"]
 
 private val plainFields = mapOf(
@@ -218,6 +241,7 @@ private val plainFields = mapOf(
     "MSA-2" to Plain("Original message ID", "Ursprüngliche Nachrichten-ID"),
 )
 
+// Shortens official field names for the guide. fieldLabel and rewriteName call it.
 private fun simplifyField(name: String, german: Boolean): String = when {
     name.contains("Patient Identifier", ignoreCase = true) -> if (german) "Patienten-ID" else "Patient ID"
     name.contains("Account Number", ignoreCase = true) -> if (german) "Fallnummer" else "Case ID"
@@ -229,8 +253,10 @@ private fun simplifyField(name: String, german: Boolean): String = when {
     else -> name
 }
 
+// Strips delimiter characters from a label. fieldLabel cleans official names with it.
 private fun phrase(value: String): String = value.replace(Regex("[|^~\\\\&]"), " ").replace(Regex("\\s+"), " ").trim()
 
+// Builds segment views with pieces. Catalog.segments and WikiScreen call it.
 internal fun wikiSegments(dictionary: Hl7Dictionary): List<WikiSegmentView> {
     val preferred = listOf("MSH", "EVN", "PID", "PD1", "NK1", "PV1", "PV2", "IN1", "IN2", "GT1", "AL1", "DG1", "PR1", "ORC", "OBR", "OBX", "NTE", "TXA", "SCH", "MSA", "ERR")
     return dictionary.segments.values
@@ -246,6 +272,7 @@ internal fun wikiSegments(dictionary: Hl7Dictionary): List<WikiSegmentView> {
         }
 }
 
+// Keeps segments matching a query. Catalog.matchingSegments and WikiScreen call it.
 internal fun filterSegments(segments: List<WikiSegmentView>, query: String): List<WikiSegmentView> {
     val needle = query.trim()
     if (needle.isEmpty()) return segments
@@ -262,6 +289,7 @@ internal fun filterSegments(segments: List<WikiSegmentView>, query: String): Lis
     }
 }
 
+// Expands fields and components into pieces. wikiSegments maps each segment through it.
 private fun segmentPieces(dictionary: Hl7Dictionary, segment: SegmentDef): List<WikiPiece> {
     val pieces = mutableListOf<WikiPiece>()
     segment.fields.sortedBy { it.number }.forEach { field ->
@@ -277,6 +305,7 @@ private fun segmentPieces(dictionary: Hl7Dictionary, segment: SegmentDef): List<
     return pieces
 }
 
+// Builds one WikiPiece with purpose and example. segmentPieces calls it per field or component.
 private fun piece(
     segment: String,
     field: Int,
@@ -293,6 +322,7 @@ private fun piece(
     return WikiPiece(code, purposeEn, purposeDe, exampleValue(code, segment, field, datatype, table, dictionary))
 }
 
+// Rewrites component names into plain purpose. piece() uses it when no plainField exists.
 private fun rewriteName(official: String, german: Boolean): String = when {
     official.equals("Namespace ID", true) -> if (german) "Kürzel" else "Short name"
     official.equals("Universal ID", true) -> if (german) "Amtliche Kennung" else "Official identifier"
@@ -305,6 +335,7 @@ private fun rewriteName(official: String, german: Boolean): String = when {
     else -> simplifyField(phrase(official), german)
 }
 
+// Picks an example value for a piece. piece() stores it for the Segments path.
 private fun exampleValue(code: String, segment: String, field: Int, datatype: String, table: String?, dictionary: Hl7Dictionary): String {
     pieceExamples[code]?.let { return it }
     if (code.count { it == '.' } == 1) pieceExamples["$segment-$field"]?.substringBefore('^')?.let { return it }
@@ -403,8 +434,10 @@ private val segmentAbout = mapOf(
     "ERR" to Plain("Error details when a message was rejected.", "Fehlerdetails, wenn eine Nachricht abgelehnt wurde."),
 )
 
+// Lists segment names from a structure. wikiExample uses it when faking a message.
 private fun segmentNames(dictionary: Hl7Dictionary, structure: String): List<String> {
     val names = mutableListOf<String>()
+    // Collects three-letter segment names. segmentNames walks the structure with it.
     fun walk(element: StructureElement) {
         if (element.group) element.children.forEach(::walk)
         else if (element.name.length == 3) names += element.name
@@ -414,6 +447,7 @@ private fun segmentNames(dictionary: Hl7Dictionary, structure: String): List<Str
     return names.distinct().take(16)
 }
 
+// Fakes one sample segment line. wikiExample joins these when no real sample matches.
 private fun fakeLine(segment: String, type: String, event: String, structure: String, version: String): String = when (segment) {
     "MSH" -> "MSH|^~\\&|WARD|NORTH|LAB|SOUTH|20260301103000||$type^$event^$structure|MSG1001|P|$version"
     "EVN" -> "EVN|$event|20260301103000"

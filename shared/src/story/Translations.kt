@@ -1,7 +1,9 @@
+// Sentence fragments. story/Index reads them.
 package hl7lookup.story
 
 import hl7lookup.i18n.Text
 
+// Panel wording for the story view. story/Index reads it via texts().
 object StoryTexts {
     val panelTitle = Text("Interpretation", "Interpretation")
     val empty = Text("Open or paste an HL7 message to read it here.", "Öffne oder füge eine HL7-Nachricht ein, um sie hier zu lesen.")
@@ -24,6 +26,7 @@ internal val locationWords = LocationWords(
     facility = Text("{0}", "{0}"),
 )
 
+// MSH sentence fragments. story/Index builds title and MSH clauses from these.
 internal object Msh {
     val full = Text("{0} at {1} sent {2}^{3} ({4}) to {5} at {6} on {7}.", "{0} bei {1} hat {2}^{3} ({4}) an {5} bei {6} gesendet, am {7}.")
     val noFacilities = Text("{0} sent {1}^{2} ({3}) to {4} on {5}.", "{0} hat {1}^{2} ({3}) an {4} gesendet, am {5}.")
@@ -37,6 +40,7 @@ internal object Msh {
     val acks = Text("Accept acknowledgment: {0}, application acknowledgment: {1}.", "Annahmequittung: {0}, Anwendungsquittung: {1}.")
 }
 
+// EVN sentence fragments. story/Index builds EVN clauses from these.
 internal object Evn {
     val recorded = Text("The event {0} was recorded on {1}.", "Das Ereignis {0} wurde am {1} erfasst.")
     val recordedShort = Text("The event was recorded on {0}.", "Das Ereignis wurde am {0} erfasst.")
@@ -46,6 +50,7 @@ internal object Evn {
     val occurred = Text("It occurred on {0}.", "Es fand am {0} statt.")
 }
 
+// PID sentence fragments. story/Index builds patient clauses from these.
 internal object Pid {
     val full = Text("The patient is {0}, {1}, born on {2} ({3} years old).", "Der Patient ist {0}, {1}, geboren am {2} ({3} Jahre alt).")
     val noAge = Text("The patient is {0}, {1}, born on {2}.", "Der Patient ist {0}, {1}, geboren am {2}.")
@@ -68,6 +73,7 @@ internal object Pid {
     val death = Text("Died on {0}.", "Verstorben am {0}.")
 }
 
+// NK1 sentence fragments. story/Index builds next-of-kin clauses from these.
 internal object Nk1 {
     val relation = Text("{0} is the patient's {1}.", "{0} ist für den Patienten: {1}.")
     val nameOnly = Text("Next of kin: {0}.", "Angehörige Person: {0}.")
@@ -76,6 +82,7 @@ internal object Nk1 {
     val role = Text("Contact role: {0}.", "Kontaktrolle: {0}.")
 }
 
+// PV1 sentence fragments. story/Index builds visit clauses from these.
 internal object Pv1 {
     val full = Text("Patient class: {0}, located at {1}.", "Patientenart: {0}, Ort {1}.")
     val classOnly = Text("Patient class: {0}.", "Patientenart: {0}.")
@@ -92,18 +99,21 @@ internal object Pv1 {
     val prior = Text("Prior location: {0}.", "Vorheriger Ort: {0}.")
 }
 
+// PV2 sentence fragments. story/Index builds visit-detail clauses from these.
 internal object Pv2 {
     val expectedAdmit = Text("Expected admission on {0}.", "Erwartete Aufnahme am {0}.")
     val expectedDischarge = Text("Expected discharge on {0}.", "Erwartete Entlassung am {0}.")
     val reason = Text("Admit reason: {0}.", "Aufnahmegrund: {0}.")
 }
 
+// AL1 sentence fragments. story/Index builds allergy clauses from these.
 internal object Al1 {
     val full = Text("Allergy to {0} ({1}), severity {2}, reaction: {3}.", "Allergie gegen {0} ({1}), Schweregrad {2}, Reaktion: {3}.")
     val typed = Text("Allergy to {0} ({1}).", "Allergie gegen {0} ({1}).")
     val short = Text("Allergy to {0}.", "Allergie gegen {0}.")
 }
 
+// DG1 sentence fragments. story/Index builds diagnosis clauses from these.
 internal object Dg1 {
     val full = Text("Diagnosis {0} ({1}), type {2}, recorded on {3}.", "Diagnose {0} ({1}), Art {2}, erfasst am {3}.")
     val typed = Text("Diagnosis {0} ({1}), type {2}.", "Diagnose {0} ({1}), Art {2}.")
@@ -111,11 +121,13 @@ internal object Dg1 {
     val described = Text("Diagnosis: {0}.", "Diagnose: {0}.")
 }
 
+// PR1 sentence fragments. story/Index builds procedure clauses from these.
 internal object Pr1 {
     val full = Text("Procedure {0} performed on {1}.", "Prozedur {0}, durchgeführt am {1}.")
     val short = Text("Procedure {0}.", "Prozedur {0}.")
 }
 
+// IN1 sentence fragments. story/Index builds insurance clauses from these.
 internal object In1 {
     val full = Text("Insured by {0} under plan {1}, policy number {2}.", "Versichert bei {0}, Tarif {1}, Versicherungsnummer {2}.")
     val noPolicy = Text("Insured by {0} under plan {1}.", "Versichert bei {0}, Tarif {1}.")
@@ -127,6 +139,7 @@ internal object In1 {
     val group = Text("Group number {0}.", "Gruppennummer {0}.")
 }
 
+// GT1 sentence fragments. story/Index builds guarantor clauses from these.
 internal object Gt1 {
     val full = Text("The guarantor is {0}, {1}.", "Kostenträger ist {0}, {1}.")
     val name = Text("The guarantor is {0}.", "Kostenträger ist {0}.")
@@ -135,6 +148,7 @@ internal object Gt1 {
     val birth = Text("Born on {0}.", "Geboren am {0}.")
 }
 
+// ORC sentence fragments. story/Index builds order-control clauses from these.
 internal object Orc {
     val control = Text("Order control: {0}.", "Auftragssteuerung: {0}.")
     val numbers = Text("Placer order {0}, filler order {1}.", "Auftragsnummer Anforderer {0}, Ausführer {1}.")
@@ -146,6 +160,7 @@ internal object Orc {
     val enteredBy = Text("Entered by {0}.", "Erfasst von {0}.")
 }
 
+// OBR sentence fragments. story/Index builds order-detail clauses from these.
 internal object Obr {
     val service = Text("Requested service: {0} ({1}).", "Angeforderte Leistung: {0} ({1}).")
     val serviceShort = Text("Requested service: {0}.", "Angeforderte Leistung: {0}.")
@@ -158,6 +173,7 @@ internal object Obr {
     val action = Text("Specimen action: {0}.", "Probenaktion: {0}.")
 }
 
+// OBX sentence fragments. story/Index builds observation clauses from these.
 internal object Obx {
     val full = Text("{0} is {1} {2}, reference range {3}, {4}.", "{0} ist {1} {2}, Referenzbereich {3}, {4}.")
     val range = Text("{0} is {1} {2}, reference range {3}.", "{0} ist {1} {2}, Referenzbereich {3}.")
@@ -169,10 +185,12 @@ internal object Obx {
     val type = Text("Value type: {0}.", "Werttyp: {0}.")
 }
 
+// NTE sentence fragments. story/Index builds note clauses from these.
 internal object Nte {
     val note = Text("Note: {0}", "Hinweis: {0}")
 }
 
+// TXA sentence fragments. story/Index builds document clauses from these.
 internal object Txa {
     val full = Text("This document is a {0} with the ID {1}.", "Dieses Dokument ist vom Typ {0} und hat die ID {1}.")
     val type = Text("Document type: {0}.", "Dokumenttyp: {0}.")
@@ -188,6 +206,7 @@ internal object Txa {
     val fileName = Text("File name: {0}.", "Dateiname: {0}.")
 }
 
+// SCH sentence fragments. story/Index builds appointment clauses from these.
 internal object Sch {
     val full = Text("Appointment {0}: {1}, status {2}.", "Termin {0}: {1}, Status {2}.")
     val reason = Text("Appointment {0}: {1}.", "Termin {0}: {1}.")
@@ -199,29 +218,34 @@ internal object Sch {
     val enteredBy = Text("Entered by {0}.", "Erfasst von {0}.")
 }
 
+// AIS sentence fragments. story/Index builds appointment-service clauses from these.
 internal object Ais {
     val full = Text("Service {0} starting {1} for {2} {3}.", "Leistung {0} ab {1} für {2} {3}.")
     val start = Text("Service {0} starting {1}.", "Leistung {0} ab {1}.")
     val short = Text("Service {0}.", "Leistung {0}.")
 }
 
+// AIG sentence fragments. story/Index builds appointment-resource clauses from these.
 internal object Aig {
     val full = Text("Resource {0} ({1}).", "Ressource {0} ({1}).")
     val short = Text("Resource {0}.", "Ressource {0}.")
     val start = Text("Starting {0}.", "Beginn {0}.")
 }
 
+// AIL sentence fragments. story/Index builds appointment-location clauses from these.
 internal object Ail {
     val full = Text("Location {0}, starting {1}.", "Ort {0}, Beginn {1}.")
     val short = Text("Location {0}.", "Ort {0}.")
 }
 
+// AIP sentence fragments. story/Index builds appointment-person clauses from these.
 internal object Aip {
     val full = Text("{0} takes part as {1}, starting {2}.", "{0} nimmt teil als {1}, Beginn {2}.")
     val role = Text("{0} takes part as {1}.", "{0} nimmt teil als {1}.")
     val short = Text("Personnel: {0}.", "Personal: {0}.")
 }
 
+// RF1 sentence fragments. story/Index builds referral clauses from these.
 internal object Rf1 {
     val full = Text("Referral {0} is {1}, priority {2}.", "Überweisung {0} ist {1}, Priorität {2}.")
     val status = Text("Referral status: {0}, priority {1}.", "Überweisungsstatus: {0}, Priorität {1}.")
@@ -234,6 +258,7 @@ internal object Rf1 {
     val processed = Text("Processed on {0}.", "Bearbeitet am {0}.")
 }
 
+// PRD sentence fragments. story/Index builds provider clauses from these.
 internal object Prd {
     val full = Text("Provider {0} with the role {1}.", "Leistungserbringer {0} mit der Rolle {1}.")
     val short = Text("Provider {0}.", "Leistungserbringer {0}.")
@@ -241,11 +266,13 @@ internal object Prd {
     val phone = Text("Provider phone: {0}.", "Telefon: {0}.")
 }
 
+// CTD sentence fragments. story/Index builds contact clauses from these.
 internal object Ctd {
     val full = Text("Contact {0} ({1}).", "Kontakt {0} ({1}).")
     val short = Text("Contact {0}.", "Kontakt {0}.")
 }
 
+// RXA sentence fragments. story/Index builds administration clauses from these.
 internal object Rxa {
     val full = Text("{0} was administered on {1}, dose {2} {3}.", "{0} wurde am {1} verabreicht, Dosis {2} {3}.")
     val date = Text("{0} was administered on {1}.", "{0} wurde am {1} verabreicht.")
@@ -257,11 +284,13 @@ internal object Rxa {
     val action = Text("Action: {0}.", "Aktion: {0}.")
 }
 
+// RXR sentence fragments. story/Index builds route clauses from these.
 internal object Rxr {
     val full = Text("Route {0}, site {1}.", "Weg {0}, Stelle {1}.")
     val short = Text("Route {0}.", "Weg {0}.")
 }
 
+// MSA sentence fragments. story/Index builds acknowledgement clauses from these.
 internal object Msa {
     val full = Text("The message {0} was answered with {1}.", "Die Nachricht {0} wurde beantwortet mit: {1}.")
     val short = Text("Acknowledgment: {0}.", "Quittung: {0}.")
@@ -269,6 +298,7 @@ internal object Msa {
     val error = Text("Error: {0}.", "Fehler: {0}.")
 }
 
+// ERR sentence fragments. story/Index builds error clauses from these.
 internal object Err {
     val full = Text("Error {0}, severity {1}.", "Fehler {0}, Schwere {1}.")
     val code = Text("Error {0}.", "Fehler {0}.")
@@ -276,18 +306,21 @@ internal object Err {
     val message = Text("Message: {0}.", "Meldung: {0}.")
 }
 
+// MRG sentence fragments. story/Index builds merge clauses from these.
 internal object Mrg {
     val prior = Text("Merges prior patient identifier {0}.", "Führt die frühere Patientenkennung {0} zusammen.")
     val account = Text("Prior account number {0}.", "Frühere Fallnummer {0}.")
     val name = Text("Prior name: {0}.", "Früherer Name: {0}.")
 }
 
+// TQ1 sentence fragments. story/Index builds timing clauses from these.
 internal object Tq1 {
     val start = Text("Starting {0}.", "Beginn {0}.")
     val end = Text("Ending {0}.", "Ende {0}.")
     val priority = Text("Priority: {0}.", "Priorität: {0}.")
 }
 
+// ROL sentence fragments. story/Index builds role clauses from these.
 internal object Rol {
     val full = Text("{0} acts as {1}.", "{0} handelt als {1}.")
 }

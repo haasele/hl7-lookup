@@ -1,3 +1,4 @@
+// Named bundle of a sender and a receiver. Workspace selects one from the top bar.
 package hl7lookup.integrations
 
 import androidx.compose.foundation.layout.Arrangement
@@ -34,11 +35,15 @@ import hl7lookup.i18n.tr
 import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 
+// Facade for completeness checks and wording. Workspace and panels call into it.
 object Integrations {
+    // True when name and at least one link are set. Dialog save and callers check via this.
     fun complete(integration: Integration): Boolean = isComplete(integration)
+    // Hands out IntegrationTexts. Feature screens that need labels use this.
     fun texts() = IntegrationTexts
 }
 
+// Lists integrations and opens the edit dialog. Workspace composes it; talks to IntegrationStore.
 @Composable
 fun IntegrationsPanel(
     store: IntegrationStore,
@@ -51,6 +56,7 @@ fun IntegrationsPanel(
 ) {
     val palette = LocalPalette.current
     var editing by remember { mutableStateOf<Integration?>(null) }
+    // Looks up a display name by id. Summary line in the list uses it.
     fun nameOf(list: List<Pair<String, String>>, id: String?) = list.firstOrNull { it.first == id }?.second
     Column(modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(6.dp)) {
@@ -89,6 +95,7 @@ fun IntegrationsPanel(
     }
 }
 
+// Modal to create or edit one integration. IntegrationsPanel opens it; saves via onSave.
 @Composable
 fun IntegrationDialog(
     initial: Integration,
@@ -100,6 +107,7 @@ fun IntegrationDialog(
 ) {
     var draft by remember(initial.id) { mutableStateOf(initial) }
     val dash = tr(IntegrationTexts.none)
+    // Builds dropdown choices with a blank dash option. Sender/receiver/interface rows use it.
     fun options(list: List<Pair<String, String>>) = listOf<Pair<String?, String>>(null to dash) + list
     Modal(tr(if (initial.name.isBlank()) IntegrationTexts.add else IntegrationTexts.edit), onDismiss, actions = {
         ActionButton(tr(ControlTexts.save), { onSave(draft) }, primary = true, enabled = isComplete(draft))

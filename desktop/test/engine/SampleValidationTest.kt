@@ -1,3 +1,4 @@
+// Locks that the built-in samples have no field findings. Calls the engine and samples.
 package hl7lookup.desktop.engine
 
 import hl7lookup.document.Er7
@@ -8,9 +9,11 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
+// Checks built-in samples have no field findings. Calls HapiEngine and Samples.
 class SampleValidationTest {
     private val engine = HapiEngine()
 
+    // Merges local and engine findings for every sample. Calls Validation and HapiEngine.inspect.
     @Test
     fun samplesHaveNoFieldLevelFindings() = runBlocking {
         val problems = mutableListOf<String>()

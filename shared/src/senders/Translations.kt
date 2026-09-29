@@ -1,7 +1,9 @@
+// Sender wording. senders/Index reads it.
 package hl7lookup.senders
 
 import hl7lookup.i18n.Text
 
+// Labels for the senders panel and dialog. senders/Index reads it.
 object SenderTexts {
     val title = Text("Senders", "Sender")
     val add = Text("New sender", "Neuer Sender")

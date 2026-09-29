@@ -1,7 +1,9 @@
+// Integration wording. integrations/Index reads it.
 package hl7lookup.integrations
 
 import hl7lookup.i18n.Text
 
+// English and German strings for the panel and dialog. Index and panels read them via tr().
 object IntegrationTexts {
     val title = Text("Integrations", "Integrationen")
     val add = Text("New integration", "Neue Integration")

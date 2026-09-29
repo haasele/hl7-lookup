@@ -1,7 +1,9 @@
+// Button and dialog wording. controls/Index reads it.
 package hl7lookup.controls
 
 import hl7lookup.i18n.Text
 
+// Wording for Close/Cancel/Save. controls/Index reads it via tr().
 object ControlTexts {
     val close = Text("Close", "Schließen")
     val cancel = Text("Cancel", "Abbrechen")

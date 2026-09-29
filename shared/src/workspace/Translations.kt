@@ -1,7 +1,9 @@
+// Menu and status wording. workspace/Index reads it.
 package hl7lookup.workspace
 
 import hl7lookup.i18n.Text
 
+// Menu and status wording. workspace/Index reads it via tr().
 object WorkspaceTexts {
     val appName = Text("HL7 Lookup", "HL7 Lookup")
     val file = Text("File", "Datei")

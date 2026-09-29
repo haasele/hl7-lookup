@@ -1,3 +1,4 @@
+// Field grid for the segment under the caret. Workspace places it beside the message.
 package hl7lookup.grid
 
 import androidx.compose.foundation.background
@@ -64,12 +65,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 
+// Facade for field rows and segment choices. Workspace and the field pane call it.
 object Grid {
+    // Builds editable grid rows for a segment. FieldGrid and tests call it through the facade.
     fun rows(message: ParsedMessage, dictionary: Hl7Dictionary?, segment: Int, showEmpty: Boolean): List<GridRow> = gridRows(message, dictionary, segment, showEmpty)
+    // Lists segments in the message for the picker. FieldGrid and the facade call it.
     fun segments(message: ParsedMessage, dictionary: Hl7Dictionary?): List<SegmentChoice> = segmentChoices(message, dictionary)
+    // Exposes grid wording. Workspace reads it via tr().
     fun texts() = GridTexts
 }
 
+// Segment picker and field rows for the caret. Workspace places it beside the message.
 @Composable
 fun FieldGrid(
     message: ParsedMessage,
@@ -128,6 +134,7 @@ fun FieldGrid(
     }
 }
 
+// One labeled field or component row. FieldGrid lists them in a LazyColumn.
 @Composable
 private fun GridLine(
     row: GridRow,
@@ -173,6 +180,7 @@ private fun GridLine(
     }
 }
 
+// Text input with table suggestions and a date button. GridLine embeds it for editable cells.
 @Composable
 private fun ValueEditor(
     row: GridRow,
@@ -229,6 +237,7 @@ private fun ValueEditor(
     if (calendar) CalendarDialog(row, message, onTextChange) { calendar = false }
 }
 
+// Date picker modal that writes HL7. ValueEditor opens it for date-like cells.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarDialog(row: GridRow, message: ParsedMessage, onTextChange: (String) -> Unit, onDismiss: () -> Unit) {

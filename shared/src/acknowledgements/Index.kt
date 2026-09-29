@@ -1,3 +1,4 @@
+// Sent and received ACK list. Workspace shows it beside the message list.
 package hl7lookup.acknowledgements
 
 import androidx.compose.foundation.background
@@ -34,19 +35,25 @@ import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 import hl7lookup.theme.Palette
 
+// Facade for building entries and coloring outcomes. Workspace and transport call into it.
 object Acknowledgements {
+    // Builds an AckEntry from raw fields. Senders and receivers report via this.
     fun entry(id: String, time: Long, direction: Direction, peer: String, message: String, ack: String?, failure: FailureCause?, detail: String?, duration: Long): AckEntry =
         entryOf(id, time, direction, peer, message, ack, failure, detail, duration)
+    // Maps an entry to ACCEPTED/ERROR/etc. Panel and color helpers use it.
     fun outcome(entry: AckEntry): AckOutcome = outcomeOf(entry)
+    // Palette color for an outcome. AcknowledgementsPanel paints rows with it.
     fun color(outcome: AckOutcome, palette: Palette): Color = when (outcome) {
         AckOutcome.ACCEPTED -> palette.success
         AckOutcome.ERROR -> palette.warning
         AckOutcome.REJECTED, AckOutcome.FAILED -> palette.error
         AckOutcome.NONE -> palette.textDim
     }
+    // Hands out AckTexts. Feature screens that need labels use this.
     fun texts() = AckTexts
 }
 
+// Scrollable ACK history with clear. Workspace composes it beside the message list.
 @Composable
 fun AcknowledgementsPanel(store: AckStore, style: DateStyle, nowIso: (Long) -> String, onOpen: (AckEntry) -> Unit, modifier: Modifier = Modifier) {
     val palette = LocalPalette.current

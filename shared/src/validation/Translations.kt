@@ -1,7 +1,9 @@
+// Finding wording. validation/Index reads it.
 package hl7lookup.validation
 
 import hl7lookup.i18n.Text
 
+// Finding panel wording. validation/Index reads it via texts().
 object ValidationTexts {
     val title = Text("Validation", "Prüfung")
     val clean = Text("No findings for this message.", "Keine Befunde für diese Nachricht.")

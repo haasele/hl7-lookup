@@ -1,3 +1,4 @@
+// Desktop entry point. It opens the window, loads the font and logo, and hosts Workspace.
 package hl7lookup.desktop.window
 
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +19,7 @@ import hl7lookup.workspace.Workspace
 import hl7lookup.workspace.Workspaces
 import kotlin.concurrent.thread
 
+// Boots the JVM app: starts HapiEngine, the HTTP server, and the Compose window that hosts Workspace.
 fun main(args: Array<String>) {
     relaunchForWayland()
     val options = parseArgs(args)

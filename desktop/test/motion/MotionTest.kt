@@ -1,3 +1,4 @@
+// Locks that every empty-state scene draws. Calls motion/Index.
 package hl7lookup.motion
 
 import androidx.compose.ui.graphics.Color
@@ -8,7 +9,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+// Checks empty-state scenes and SVG parsing. Calls Motion via Index.
 class MotionTest {
+    // Asserts every IllustrationKind builds a scene. Calls Motion.illustration and splash.
     @Test
     fun everyPlaceholderIsADrawableScene() {
         IllustrationKind.entries.forEach { kind ->
@@ -22,6 +25,7 @@ class MotionTest {
         assertTrue(splash.shapes.size >= 6)
     }
 
+    // Asserts SVG path/rect parsing and bad paths. Calls Motion.read.
     @Test
     fun svgPathsKeepSubpathsColorsAndCurves() {
         val split = Motion.read("""<svg viewBox="0 0 20 12"><path d="M1 1 H8 V6 Z M12 2 H18" fill="none" stroke="#6EB6F0" stroke-width="2" stroke-linecap="round"/></svg>""")

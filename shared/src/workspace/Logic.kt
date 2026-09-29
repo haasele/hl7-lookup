@@ -1,3 +1,4 @@
+// Tab actions, send, poll and which dialog is open. workspace/Index calls them.
 package hl7lookup.workspace
 
 import androidx.compose.runtime.getValue
@@ -57,18 +58,25 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+// Which modal is open. WorkspaceState and Index set and read it.
 enum class DialogKind { NONE, SETTINGS, HIGHLIGHT, FILTER, COMPARE, ANONYMIZE, INTERFACES, LICENSE, NEW_MESSAGE, SEND_TO_TAB, DIAGNOSIS, ACK, CATALOG }
 
+// Bottom session pane tabs. SessionPanel and WorkspaceState switch it.
 enum class BottomTab { MESSAGES, SENDERS, RECEIVERS, INTEGRATIONS, ACKS }
 
+// Side pane tabs for stats and validation. SidePanel switches it.
 enum class SideTab { STATISTICS, VALIDATION }
 
+// One match from cross-tab search. searchSession builds it; step/goTo use it.
 data class SearchHit(val tabId: String, val index: Int, val span: Span, val ordinal: Int)
 
+// Status-bar toast text and severity. notify builds it; StatusBar shows it.
 data class Note(val text: Text, val args: List<String>, val severity: Severity, val id: Long)
 
+// Editor caret jump target. focusAt sets it; RawEditor reads it.
 data class FocusRequest(val offset: Int, val sequence: Long)
 
+// Snapshot of the active message for panes. WorkspaceRoot builds it; panels read it.
 internal class View(
     val tab: hl7lookup.session.DocumentTab?,
     val text: String,
@@ -86,8 +94,10 @@ internal class View(
 
 internal val ackCodes = listOf("AA", "AE", "AR", "CA", "CE", "CR")
 
+// Poll position for transport events. readCursor/writeCursor and startPolling use it.
 internal data class EventCursor(val epoch: String?, val sequence: Long)
 
+// Parses a stored poll cursor string. startPolling calls it on load.
 internal fun readCursor(raw: String?): EventCursor {
     if (raw.isNullOrBlank()) return EventCursor(null, 0)
     val epoch = raw.substringBefore('\n').ifBlank { null }
@@ -95,8 +105,10 @@ internal fun readCursor(raw: String?): EventCursor {
     return EventCursor(epoch, sequence)
 }
 
+// Serializes a poll cursor for storage. startPolling writes it after batches.
 internal fun writeCursor(cursor: EventCursor): String = "${cursor.epoch.orEmpty()}\n${cursor.sequence}"
 
+// Finds query hits across all tab messages. search and refreshSearch call it.
 internal fun searchSession(tabs: List<hl7lookup.session.DocumentTab>, query: String): List<SearchHit> {
     if (query.isBlank()) return emptyList()
     val hits = mutableListOf<SearchHit>()
@@ -108,14 +120,17 @@ internal fun searchSession(tabs: List<hl7lookup.session.DocumentTab>, query: Str
     return hits
 }
 
+// Lists event codes for a message type. NewMessageDialog and Workspaces call it.
 internal fun eventsOf(dictionary: Hl7Dictionary?, type: String): List<String> =
     dictionary?.eventStructures?.keys.orEmpty().filter { it.startsWith("${type}_") }.map { it.substringAfter('_') }.distinct().sorted()
 
+// Lists three-letter message types from the dictionary. NewMessageDialog and Workspaces call it.
 internal fun typesOf(dictionary: Hl7Dictionary?): List<String> {
     val fromStructures = dictionary?.eventStructures?.keys.orEmpty().map { it.substringBefore('_') }
     return (fromStructures + dictionary?.messageTypes?.keys.orEmpty()).filter { it.length == 3 && it.all(Char::isLetter) }.distinct().sorted()
 }
 
+// Holds open dialogs, send/poll, and search. Workspace composables call into it.
 class WorkspaceState(
     val platform: Platform,
     val engine: Hl7Engine,
@@ -168,51 +183,65 @@ class WorkspaceState(
 
     val language: Language get() = settings.current.language
 
+    // Formats a Text in the current language. Menus and notify call it.
     fun resolve(text: Text, vararg args: Any?): String = I18n.format(text, language, *args)
 
+    // Shows a status-bar note. Actions call it after open/send/save.
     fun notify(text: Text, vararg args: Any?, severity: Severity = Severity.INFO) {
         sequence += 1
         note = Note(text, args.map { it.toString() }, severity, sequence)
     }
 
+    // Clears the status-bar note. StatusBar close and auto-dismiss call it.
     fun dismissNote() {
         note = null
     }
 
+    // Picks the HL7 version for a message. inspect and dictionaryFor call it.
     fun versionOf(text: String): String = dictionaries.resolveVersion(Er7.header(Er7.parse(text)).version, settings.current.version)
 
+    // Loads the dictionary for a message version. Compare and anonymize call it.
     fun dictionaryFor(text: String): Hl7Dictionary? = dictionaries.get(versionOf(text))
 
+    // Loads a dictionary by version id. NewMessageDialog and message list call it.
     fun dictionaryForVersion(version: String): Hl7Dictionary? = dictionaries.get(dictionaries.resolveVersion(version, settings.current.version))
 
+    // Resolves the tab or integration interface. WorkspaceRoot and highlights use it.
     fun activeInterface(): InterfaceDefinition? {
         val tab = session.active
         return interfaces.get(tab?.interfaceId) ?: interfaces.get(integrations.get(integrations.active.integrationId)?.interfaceId)
     }
 
+    // Requests the editor jump to an offset. goTo and search hits call it.
     fun focusAt(offset: Int) {
         sequence += 1
         focus = FocusRequest(offset, sequence)
     }
 
+    // Lists tab id/title pairs for pickers. Senders and receivers panels call it.
     fun tabChoices(): List<Pair<String, String>> = session.tabs.map { it.id to it.title }
 
+    // Ensures an active tab id exists. addToActive calls it when none is open.
     private fun activeTabId(): String = session.activeId ?: session.addTab(resolve(SessionTexts.untitled), emptyList())
 
+    // Appends messages to the active tab. open, paste, create, and ACK call it.
     private fun addToActive(texts: List<String>, origin: MessageOrigin, source: String? = null) {
         val tab = session.active
         session.addMessages(tab?.id ?: activeTabId(), texts, origin, source)
     }
 
+    // Opens an empty untitled tab. File menu and shortcuts call it.
     fun newTab() {
         session.addTab(resolve(SessionTexts.untitled), emptyList())
     }
 
+    // Picks a file and loads its messages. File menu and empty state call it.
     fun openFile() = scope.launch {
         val file = platform.openTextFile(resolve(PlatformTexts.openMessages), Platforms.messageExtensions()) ?: return@launch
         openContent(file.name, file.content)
     }
 
+    // Splits file content into tab messages. openFile and hosts call it.
     fun openContent(name: String, content: String) {
         val texts = Er7.splitFile(content)
         if (texts.isEmpty()) {
@@ -229,6 +258,7 @@ class WorkspaceState(
         notify(WorkspaceTexts.opened, texts.size, Sessions.title(name))
     }
 
+    // Pastes clipboard HL7 into the active tab. File menu and empty state call it.
     fun paste() = scope.launch {
         val clip = platform.readClipboard()
         val texts = clip?.let(Er7::splitFile).orEmpty()
@@ -240,11 +270,13 @@ class WorkspaceState(
         notify(WorkspaceTexts.pasted, texts.size)
     }
 
+    // Splits pasted text into messages. Hosts that inject clipboard text call it.
     fun pasteText(text: String) {
         val texts = Er7.splitFile(text)
         if (texts.isNotEmpty()) addToActive(texts, MessageOrigin.PASTED)
     }
 
+    // Writes the active tab to a file. File menu and Ctrl+S call it.
     fun save(saveAs: Boolean) = scope.launch {
         val tab = session.active ?: return@launch
         if (tab.messages.isEmpty()) {
@@ -259,21 +291,25 @@ class WorkspaceState(
         }
     }
 
+    // Copies the current message to the clipboard. File menu calls it.
     fun copyCurrent() = scope.launch {
         val entry = session.currentMessage ?: return@launch
         platform.writeClipboard(Er7.toFile(listOf(entry.text)))
         notify(WorkspaceTexts.copied)
     }
 
+    // Loads one sample message into the active tab. Sample menu entries call it.
     fun loadSample(id: String) {
         val text = Samples.text(id) ?: return
         addToActive(listOf(text), MessageOrigin.SAMPLE)
     }
 
+    // Opens every sample in a new tab. File menu "all samples" calls it.
     fun loadAllSamples() {
         session.addTab(resolve(WorkspaceTexts.samplesTab), Samples.all(), MessageOrigin.SAMPLE)
     }
 
+    // Asks the engine for a new message. NewMessageDialog create button calls it.
     fun create(type: String, event: String, version: String) = scope.launch {
         busy = true
         when (val result = Engines.attempt { engine.create(CreateRequest(type, event, version)) }) {
@@ -290,6 +326,7 @@ class WorkspaceState(
         busy = false
     }
 
+    // Builds an ACK via the engine. AckDialog generate calls it.
     fun acknowledge(code: String, errorText: String?, intoTab: Boolean) = scope.launch {
         val entry = session.currentMessage ?: return@launch
         when (val result = Engines.attempt { engine.acknowledge(AckRequest(entry.text, code, errorText)) }) {
@@ -306,6 +343,7 @@ class WorkspaceState(
         }
     }
 
+    // Runs engine validation on the current text. WorkspaceRoot auto-validate calls it.
     suspend fun inspect(text: String) {
         if (text.isBlank()) {
             report = null
@@ -325,12 +363,14 @@ class WorkspaceState(
         reportText = text
     }
 
+    // Updates the search query and hit list. SearchBox input calls it.
     fun search(query: String) {
         searchQuery = query
         searchHits = searchSession(session.tabs, query)
         searchIndex = 0
     }
 
+    // Recomputes hits after session changes. WorkspaceRoot persistence effect calls it.
     fun refreshSearch() {
         if (searchQuery.isNotBlank()) {
             val previous = searchHits.getOrNull(searchIndex)
@@ -340,18 +380,21 @@ class WorkspaceState(
         }
     }
 
+    // Moves to the next or previous search hit. SearchBox and F3 call it.
     fun step(delta: Int) {
         if (searchHits.isEmpty()) return
         searchIndex = ((searchIndex + delta) % searchHits.size + searchHits.size) % searchHits.size
         goTo(searchHits[searchIndex])
     }
 
+    // Activates the tab/message and focuses the hit. step calls it.
     fun goTo(hit: SearchHit) {
         session.activate(hit.tabId)
         session.selectMessage(hit.tabId, hit.index)
         focusAt(hit.span.start)
     }
 
+    // Copies messages into another tab and logs ACKs. Send-to-tab dialog calls it.
     fun sendToTab(tabId: String?, all: Boolean) = scope.launch {
         val tab = session.active ?: return@launch
         val texts = if (all) tab.messages.map { it.text } else listOfNotNull(session.currentMessage?.text)
@@ -370,6 +413,7 @@ class WorkspaceState(
         notify(I18n.plural(texts.size.toLong(), WorkspaceTexts.sentToTabOne, WorkspaceTexts.sentToTab), texts.size, targetTitle)
     }
 
+    // Sends via transport or tab target. Senders panel and sendActive call it.
     fun send(sender: Sender, all: Boolean) {
         if (sender.protocol == Protocol.TAB) {
             sendToTab(sender.targetTab, all)
@@ -406,6 +450,7 @@ class WorkspaceState(
         }
     }
 
+    // Sends with the active integration sender. TopBar Send button calls it.
     fun sendActive(all: Boolean) {
         val sender = senders.get(integrations.active.senderId) ?: senders.items.firstOrNull()
         if (sender == null) {
@@ -416,6 +461,7 @@ class WorkspaceState(
         send(sender, all)
     }
 
+    // Diagnoses a sender connection. Senders panel test action calls it.
     fun test(sender: Sender) = scope.launch {
         busy = true
         when (val result = Engines.attempt { transport.diagnose(Senders.endpoint(sender)) }) {
@@ -426,6 +472,7 @@ class WorkspaceState(
         dialog = DialogKind.DIAGNOSIS
     }
 
+    // Starts or stops a receiver. Receivers panel toggle calls it.
     fun toggle(receiver: Receiver, start: Boolean) = scope.launch {
         val result = Engines.attempt { if (start) transport.startReceiver(Receivers.config(receiver)) else transport.stopReceiver(receiver.id) }
         when (result) {
@@ -441,6 +488,7 @@ class WorkspaceState(
         }
     }
 
+    // Polls transport for received messages. WorkspaceRoot launches it once.
     fun startPolling() = scope.launch {
         var cursor = readCursor(platform.loadValue(cursorKey))
         var round = 0
@@ -468,6 +516,7 @@ class WorkspaceState(
         }
     }
 
+    // Places a received event into a tab and ACK list. startPolling calls it.
     private fun deliver(event: TransportEvent) {
         val receiver = receivers.get(event.receiverId)
         val target = receiver?.targetTab?.takeIf { session.tab(it) != null }
@@ -478,6 +527,7 @@ class WorkspaceState(
         acks.add(Acknowledgements.entry(session.newId("ack"), event.timestamp.takeIf { it > 0 } ?: platform.nowMillis(), Direction.RECEIVED, peer, event.text, event.ack, null, null, 0))
     }
 
+    // Collects texts to anonymize. AnonymizeDialog reads it.
     fun anonymizeInput(scope: AnonymizeScope): List<String> {
         val tab = session.active ?: return emptyList()
         return when (scope) {
@@ -486,6 +536,7 @@ class WorkspaceState(
         }
     }
 
+    // Writes anonymized texts back to tabs. AnonymizeDialog onResult calls it.
     fun applyAnonymized(options: AnonymizeOptions, output: List<String>) {
         val tab = session.active ?: return
         if (output.isEmpty()) return
@@ -496,6 +547,7 @@ class WorkspaceState(
         }
     }
 
+    // Loads interface definitions from a file. Interfaces menu/dialog call it.
     fun importInterfaces() = scope.launch {
         val file = platform.openTextFile(resolve(PlatformTexts.openInterface), Platforms.interfaceExtensions()) ?: return@launch
         val definitions = Interfaces.decode(file.content)
@@ -507,17 +559,20 @@ class WorkspaceState(
         notify(Interfaces.texts().imported, definitions.size)
     }
 
+    // Saves interface definitions to a file. Interfaces menu/dialog call it.
     fun exportInterfaces(definitions: List<InterfaceDefinition>) = scope.launch {
         if (definitions.isEmpty()) return@launch
         val name = (if (definitions.size == 1) definitions.first().name else "interfaces").replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('_').ifEmpty { "interface" } + ".json"
         platform.saveTextFile(resolve(PlatformTexts.saveInterface), name, Interfaces.encode(definitions))?.let { notify(WorkspaceTexts.saved, Sessions.title(it)) }
     }
 
+    // Opens an ACK message in a new tab. AcknowledgementsPanel onOpen calls it.
     fun openAck(entry: hl7lookup.acknowledgements.AckEntry) {
         val ack = entry.ack ?: return
         session.addTab(resolve(WorkspaceTexts.acks), listOf(ack), MessageOrigin.RECEIVED)
     }
 
+    // Sets the interface on the active tab. Interface menu and dialog call it.
     fun useInterface(id: String?) {
         val tab = session.active ?: return
         session.setInterface(tab.id, id)

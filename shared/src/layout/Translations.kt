@@ -1,7 +1,9 @@
+// Layout menu wording. layout/Index reads it.
 package hl7lookup.layout
 
 import hl7lookup.i18n.Text
 
+// Menu and dialog strings for presets; LayoutMenu and LayoutPresetDialog read these via tr.
 object LayoutTexts {
     val menu = Text("Layout", "Layout")
     val reset = Text("Standard layout", "Standardlayout")

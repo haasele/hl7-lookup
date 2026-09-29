@@ -1,3 +1,4 @@
+// Locks wiki type order, the guide text and segment explanations. Calls catalog/Index.
 package hl7lookup.catalog
 
 import hl7lookup.dictionary.ComponentDef
@@ -11,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+// Checks wiki type lists, guides and segment explanations. Calls Catalog via Index.
 class CatalogTest {
     private val dictionary = Hl7Dictionary(
         version = "2.5",
@@ -37,6 +39,7 @@ class CatalogTest {
         ),
     )
 
+    // Asserts type/event ordering and sample/guide text. Calls Catalog.types, example and guide.
     @Test
     fun listsEveryTypeAndPrefersARealSample() {
         val sample = "MSH|^~\\&|A|B|C|D|20260301083000||ORM^O01^ORM_O01|1|P|2.5"
@@ -58,6 +61,7 @@ class CatalogTest {
         assertTrue(!guide.contains("Namespace"))
     }
 
+    // Asserts MSH field purposes and search. Calls Catalog.segments and matchingSegments.
     @Test
     fun segmentListExplainsEachSlot() {
         val msh = Catalog.segments(dictionary).single { it.name == "MSH" }
@@ -68,6 +72,7 @@ class CatalogTest {
         assertEquals(listOf("MSH"), Catalog.matchingSegments(Catalog.segments(dictionary), "clinic").map { it.name })
     }
 
+    // Asserts type search by description and code. Calls Catalog.matching.
     @Test
     fun searchMatchesTheDescription() {
         val types = Catalog.types(dictionary)

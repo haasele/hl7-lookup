@@ -1,3 +1,4 @@
+// Locks parse, validation and dictionary shape. Calls desktop engine/Index.
 package hl7lookup.desktop.engine
 
 import hl7lookup.dictionary.Dictionaries
@@ -13,6 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
+// Checks parse, validation and dictionary shape through HapiEngine. Calls desktop engine/Index.
 class HapiEngineTest {
     private val engine = HapiEngine()
 
@@ -23,12 +25,14 @@ class HapiEngineTest {
         "PV1|1|I|STA3^12^2||||0815^Okafor^Daniel",
     ).joinToString("\n")
 
+    // Asserts common HL7 versions are listed. Calls HapiEngine.versions.
     @Test
     fun versionsIncludeCommonReleases() = runBlocking {
         val versions = engine.versions()
         assertTrue("2.5" in versions && "2.3" in versions && "2.8.1" in versions, versions.toString())
     }
 
+    // Asserts PID/XPN/CX tables and structures. Calls HapiEngine.dictionary.
     @Test
     fun dictionaryDescribesFieldsComponentsAndTables() = runBlocking {
         val dictionary = engine.dictionary("2.5")
@@ -47,6 +51,7 @@ class HapiEngineTest {
         println("dictionary 2.5 json size: $size, segments ${dictionary.segments.size}, datatypes ${dictionary.datatypes.size}, structures ${dictionary.structures.size}")
     }
 
+    // Asserts structure names and missing-segment findings. Calls HapiEngine.inspect.
     @Test
     fun inspectReportsStructureAndPositions() = runBlocking {
         val report = engine.inspect(InspectRequest(admit))
@@ -56,6 +61,7 @@ class HapiEngineTest {
         assertTrue(broken.findings.any { it.message.contains("PV1") })
     }
 
+    // Asserts ACK code and control id round-trip. Calls HapiEngine.acknowledge.
     @Test
     fun acknowledgesWithCode() = runBlocking {
         val ack = engine.acknowledge(AckRequest(admit, "AE", "Bed not free"))
@@ -63,6 +69,7 @@ class HapiEngineTest {
         assertTrue(ack.contains("MSG0001"))
     }
 
+    // Asserts create builds an ORU^R01 MSH. Calls HapiEngine.create.
     @Test
     fun createsSkeletonMessages() = runBlocking {
         val text = engine.create(CreateRequest("ORU", "R01", "2.5.1"))

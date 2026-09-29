@@ -1,3 +1,4 @@
+// List of messages in the active tab. Workspace shows it under the editor.
 package hl7lookup.messages
 
 import androidx.compose.foundation.background
@@ -32,11 +33,15 @@ import hl7lookup.session.MessageEntry
 import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 
+// Facade for message-row building and list wording. Workspace calls MessageList.
 object MessageList {
+    // Builds a table row for one message. Callers use it; it delegates to rowOf.
     fun row(index: Int, text: String, style: DateStyle, dictionary: (String) -> Hl7Dictionary?): MessageRow = rowOf(index, text, style, dictionary(versionOf(text)))
+    // Hands out MessageListTexts. Workspace and the panel read labels through this.
     fun texts() = MessageListTexts
 }
 
+// Scrollable table of messages in the active tab. Workspace shows it; it builds rows via rowOf.
 @Composable
 fun MessageListPanel(
     messages: List<MessageEntry>,

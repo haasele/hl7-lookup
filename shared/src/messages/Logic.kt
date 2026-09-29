@@ -1,3 +1,4 @@
+// Titles and order of those messages. messages/Index calls it.
 package hl7lookup.messages
 
 import hl7lookup.datetime.DateStyle
@@ -6,10 +7,13 @@ import hl7lookup.dictionary.Dictionaries
 import hl7lookup.dictionary.Hl7Dictionary
 import hl7lookup.document.Er7
 
+// One display row for the message table. MessageList.row and the panel build these via rowOf.
 data class MessageRow(val index: Int, val time: String, val type: String, val description: String, val controlId: String)
 
+// Reads MSH version from ER7 text. MessageListPanel and row builders call it.
 internal fun versionOf(text: String): String = Er7.header(Er7.parse(text)).version
 
+// Parses ER7 into time, type and description columns. MessageList.row and the panel call it.
 internal fun rowOf(index: Int, text: String, style: DateStyle, dict: Hl7Dictionary?): MessageRow {
     val message = Er7.parse(text)
     val header = Er7.header(message)

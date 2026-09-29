@@ -1,3 +1,4 @@
+// Side-by-side message compare. Workspace opens it from Tools.
 package hl7lookup.compare
 
 import androidx.compose.foundation.layout.Arrangement
@@ -35,11 +36,15 @@ import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 import hl7lookup.validation.Finding
 
+// Facade for side-by-side diffs. Workspace and CompareDialog call it.
 object Compare {
+    // Diffs two parsed messages. Compare.run and CompareDialog call it.
     fun run(left: ParsedMessage, right: ParsedMessage, options: CompareOptions = CompareOptions()): CompareResult = compareMessages(left, right, options)
+    // Exposes compare wording. Workspace reads it via tr().
     fun texts() = CompareTexts
 }
 
+// Dialog to pick two messages and show diffs. Workspace opens it from Tools.
 @Composable
 fun CompareDialog(
     choices: List<CompareChoice>,

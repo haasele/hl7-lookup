@@ -1,7 +1,9 @@
+// Filter wording. filters/Index reads it.
 package hl7lookup.filters
 
 import hl7lookup.i18n.Text
 
+// Filter dialog wording. filters/Index reads it via texts().
 object FilterTexts {
     val title = Text("Filter message list", "Nachrichtenliste filtern")
     val type = Text("Message type", "Nachrichtentyp")

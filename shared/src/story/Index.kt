@@ -1,3 +1,4 @@
+// Plain-language reading of a message. Workspace shows it above the message.
 package hl7lookup.story
 
 import androidx.compose.foundation.background
@@ -278,14 +279,20 @@ private val segmentSentences: Map<String, List<Sentence>> = mapOf(
     "ROL" to listOf(sentence(clause(Rol.full, slot(4, format = PERSON), slot(3, format = CODE)))),
 )
 
+// Facade that builds and flattens stories. Workspace and StoryTest call it.
 object Stories {
+    // Renders a message into title and paragraphs. Workspace asks Stories.build for the pane.
     fun build(message: ParsedMessage, context: StoryContext): Story =
         buildStory(message, context, segmentSentences, titleSentences, storyWords, locationWords)
+    // Flattens a story to plain text. Copy actions and tests call it.
     fun plain(story: Story): String = plainText(story)
+    // Segment names that have narrated templates. Workspace and tests ask which segments are covered.
     fun narratedSegments(): Set<String> = segmentSentences.keys
+    // Exposes story wording. Workspace reads it via tr().
     fun texts() = StoryTexts
 }
 
+// Clickable story paragraphs with highlights. Workspace shows it above the message.
 @Composable
 fun StoryView(
     story: Story?,
@@ -300,6 +307,7 @@ fun StoryView(
         EmptyState(tr(StoryTexts.empty), modifier, illustration = IllustrationKind.STORY)
         return
     }
+    // Turns story pieces into an AnnotatedString with links. StoryView calls it for title and body.
     fun render(pieces: List<StoryPiece>, strong: Boolean): AnnotatedString = buildAnnotatedString {
         for (piece in pieces) {
             when (piece) {

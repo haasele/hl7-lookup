@@ -1,3 +1,4 @@
+// SVG scenes and their timing. motion/Index draws them.
 package hl7lookup.motion
 
 import androidx.compose.ui.geometry.Offset
@@ -11,10 +12,13 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 
+// Which empty-state drawing to show; EmptyState and Illustration pick one of these.
 enum class IllustrationKind { STORY, MESSAGE, MESSAGES, SENDER, RECEIVER, INTEGRATION, ACK, FIELDS, STATISTICS, VALIDATION }
 
+// Parsed SVG size and shapes ready to draw; parseSvg returns this, drawScene consumes it.
 data class VectorScene(val width: Float, val height: Float, val shapes: List<VectorShape>)
 
+// One stroked or filled path from SVG; styled builds these, drawScene paints them in order.
 data class VectorShape(
     val path: Path,
     val stroke: Color?,
@@ -34,10 +38,13 @@ private val attributePattern = Regex("""([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')"
 private val pathTokenPattern = Regex("""[MmLlHhVvCcSsQqTtAaZz]|[-+]?(?:\d+\.\d+|\d+|\.\d+)(?:[eE][-+]?\d+)?""")
 private val numberPattern = Regex("""[-+]?(?:\d+\.\d+|\d+|\.\d+)""")
 
+// Builds the plate SVG for an illustration kind; Motion.illustration forwards here.
 internal fun illustrationScene(kind: IllustrationKind): VectorScene = parseSvg(plate(illustrationBody(kind)))
 
+// Parses the splash SVG string; Motion.splash forwards here.
 internal fun splashScene(): VectorScene = parseSvg(splashSvg)
 
+// Turns SVG markup into sized shapes; Motion.read and scene builders call this.
 internal fun parseSvg(source: String): VectorScene {
     val box = Regex("""viewBox\s*=\s*"([^"]+)"""").find(source)?.groupValues?.get(1)
         ?.split(Regex("[,\\s]+"))?.mapNotNull { it.toFloatOrNull() }.orEmpty()
@@ -49,6 +56,7 @@ internal fun parseSvg(source: String): VectorScene {
     return VectorScene(width, height, shapes)
 }
 
+// Paints a scene with a progressive stroke reveal; Illustration and SplashCover Canvas calls call this.
 internal fun drawScene(scope: DrawScope, scene: VectorScene, reveal: Float) {
     val sx = scope.size.width / scene.width.coerceAtLeast(1f)
     val sy = scope.size.height / scene.height.coerceAtLeast(1f)
@@ -75,6 +83,7 @@ internal fun drawScene(scope: DrawScope, scene: VectorScene, reveal: Float) {
     }
 }
 
+// Wraps illustration body paths in the shared circular plate SVG; illustrationScene calls this.
 private fun plate(body: String): String = """
     <svg viewBox="0 0 80 80">
       <circle cx="40" cy="40" r="31" fill="#141E2B" stroke="#2A3A50" stroke-width="1.4"/>
@@ -82,6 +91,7 @@ private fun plate(body: String): String = """
     </svg>
 """.trimIndent()
 
+// Returns the inner SVG markup for a kind; illustrationScene passes it to plate.
 private fun illustrationBody(kind: IllustrationKind): String = when (kind) {
     IllustrationKind.STORY -> """
         <path d="M27 30 H38 C40 36 40 46 38 54 H27 Z" fill="none" stroke="#6EB6F0" stroke-width="1.6" stroke-linejoin="round"/>
@@ -153,10 +163,12 @@ private val splashSvg = """
     </svg>
 """.trimIndent()
 
+// Mutable path being built while parsing SVG d; vectorContours creates and filters these.
 private class Contour(val path: Path) {
     var ink: Boolean = false
 }
 
+// Parses SVG attribute name/value pairs; parseSvg passes the match group here.
 private fun attributes(raw: String): Map<String, String> {
     val map = LinkedHashMap<String, String>()
     attributePattern.findAll(raw).forEach { match ->
@@ -166,6 +178,7 @@ private fun attributes(raw: String): Map<String, String> {
     return map
 }
 
+// Turns a tag and attributes into stroked or filled shapes; parseSvg flats these per element.
 private fun styled(tag: String, attr: Map<String, String>): List<VectorShape> {
     val paths = geometry(tag, attr)
     if (paths.isEmpty()) return emptyList()
@@ -189,6 +202,7 @@ private fun styled(tag: String, attr: Map<String, String>): List<VectorShape> {
     return paths.map { VectorShape(it, stroke, fill, width, cap, join) }
 }
 
+// Builds Compose paths for one SVG element tag; styled calls this before applying paint.
 private fun geometry(tag: String, attr: Map<String, String>): List<Path> = when (tag) {
     "path" -> vectorContours(attr["d"].orEmpty())
     "circle" -> {
@@ -226,10 +240,12 @@ private fun geometry(tag: String, attr: Map<String, String>): List<Path> = when 
     else -> emptyList()
 }
 
+// Builds an oval path from center and radii; geometry uses this for circle and ellipse.
 private fun oval(cx: Float, cy: Float, rx: Float, ry: Float): Path = Path().apply {
     addOval(Rect(cx - rx, cy - ry, cx + rx, cy + ry))
 }
 
+// Builds a rectangle path with optional corner radii; geometry uses this for rect tags.
 private fun roundedRect(x: Float, y: Float, w: Float, h: Float, rx: Float, ry: Float): Path {
     val path = Path()
     val rrx = rx.coerceIn(0f, w / 2f)
@@ -253,6 +269,7 @@ private fun roundedRect(x: Float, y: Float, w: Float, h: Float, rx: Float, ry: F
     return path
 }
 
+// Parses an SVG path d string into stroked contours; geometry calls this for path tags.
 private fun vectorContours(description: String): List<Path> {
     val tokens = pathTokenPattern.findAll(description).map { it.value }.toList()
     if (tokens.isEmpty()) return emptyList()
@@ -269,15 +286,18 @@ private fun vectorContours(description: String): List<Path> {
     var cubic = false
     var quad = false
 
+    // True when the token at an index is a number; take and the parser loop call this.
     fun numberAt(at: Int): Boolean {
         if (at >= tokens.size) return false
         val char = tokens[at][0]
         return char.isDigit() || char == '-' || char == '+' || char == '.'
     }
+    // Consumes the next count numeric tokens; command handlers call this to read arguments.
     fun take(count: Int): List<Float>? {
         if ((0 until count).any { !numberAt(index + it) }) return null
         return List(count) { tokens[index++].toFloat() }
     }
+    // Starts a new contour at a point; M commands and line helpers call this.
     fun begin(x: Float, y: Float) {
         val current = contour
         val next = if (current == null || current.ink) Contour(Path()).also { contours += it } else current
@@ -290,9 +310,11 @@ private fun vectorContours(description: String): List<Path> {
         cubic = false
         quad = false
     }
+    // Flags the current contour as drawn; drawing commands call this after adding geometry.
     fun mark() {
         contour?.ink = true
     }
+    // Appends a line segment and updates the pen; L/H/V and arc fallbacks call this.
     fun line(x: Float, y: Float) {
         if (contour == null) begin(cx, cy)
         contour!!.path.lineTo(x, y)
@@ -416,8 +438,10 @@ private fun vectorContours(description: String): List<Path> {
     return contours.filter { it.ink }.map { it.path }
 }
 
+// Parses a length string to float, stripping px; geometry and styled call this for sizes.
 private fun dimension(value: String?): Float? = value?.trim()?.removeSuffix("px")?.toFloatOrNull()
 
+// Parses a hex or none color; styled calls this for fill and stroke.
 private fun parseColor(value: String?): Color? {
     if (value == null || value.equals("none", true) || value.equals("transparent", true)) return null
     val hex = value.removePrefix("#")

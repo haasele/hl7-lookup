@@ -1,13 +1,16 @@
+// Sample titles. samples/Index reads them.
 package hl7lookup.samples
 
 import hl7lookup.i18n.Text
 
+// Menu and tab wording for samples; Samples.texts returns this for Index readers.
 object SampleTexts {
     val menu = Text("Samples", "Beispiele")
     val openAll = Text("Open all samples", "Alle Beispiele öffnen")
     val tabTitle = Text("Samples", "Beispiele")
 }
 
+// One built-in HL7 sample with id, title and lines; the samples list holds these.
 internal class Sample(val id: String, val title: Text, val lines: List<String>)
 
 internal val samples = listOf(

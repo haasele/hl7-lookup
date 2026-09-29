@@ -1,3 +1,4 @@
+// Caret hit testing, date writing and syntax colors. editor/Index calls them; TooltipSpotTest calls Editor.tipSpot.
 package hl7lookup.editor
 
 import androidx.compose.ui.geometry.Offset
@@ -23,10 +24,13 @@ import hl7lookup.document.FieldPath
 import hl7lookup.document.ParsedMessage
 import hl7lookup.document.Span
 
+// Kinds of colored spans in the raw editor. Mark and searchMarks pick among them.
 enum class MarkKind { SELECTION, HIGHLIGHT, SEARCH, SEARCH_CURRENT, ERROR, WARNING }
 
+// A colored span over message text. RawEditor and searchMarks build lists of these.
 data class Mark(val span: Span, val kind: MarkKind, val color: Color)
 
+// Palette for ER7 syntax colors. styled() and HighlightTransformation take it.
 data class EditorColors(
     val text: Color,
     val field: Color,
@@ -37,6 +41,7 @@ data class EditorColors(
     val segment: (String) -> Color,
 )
 
+// Dictionary facts for the caret path. cursorInfo builds it; CursorTooltip shows it.
 data class CursorInfo(
     val path: FieldPath,
     val label: String,
@@ -53,6 +58,7 @@ data class CursorInfo(
 
 private val dateTypes = setOf("DT", "DTM", "TS")
 
+// Paints segment names, delimiters and marks. HighlightTransformation and Editor.highlight call it.
 internal fun styled(text: String, message: ParsedMessage, colors: EditorColors, marks: List<Mark>): AnnotatedString = buildAnnotatedString {
     append(text)
     val d = message.delimiters
@@ -87,6 +93,7 @@ internal fun styled(text: String, message: ParsedMessage, colors: EditorColors, 
     }
 }
 
+// Finds which path holds the date for a datatype. cursorInfo uses it for date tips.
 internal fun dateTargetOf(path: FieldPath, node: NodeInfo?): FieldPath? {
     if (node == null || path.field == 0) return null
     return when {
@@ -97,6 +104,7 @@ internal fun dateTargetOf(path: FieldPath, node: NodeInfo?): FieldPath? {
     }
 }
 
+// Assembles CursorInfo for a path. Editor.info and RawEditor tooltips call it.
 internal fun cursorInfo(
     message: ParsedMessage,
     dictionary: Hl7Dictionary?,
@@ -127,6 +135,7 @@ internal fun cursorInfo(
     )
 }
 
+// Parses local date input and writes HL7. Editor.writeDate and DateEditor call it.
 internal fun writeDate(message: ParsedMessage, target: FieldPath, previous: Hl7Time?, input: String, style: DateStyle): String? {
     val parsed = Hl7Dates.parseInput(input, style) ?: return null
     val precision = when {
@@ -139,13 +148,16 @@ internal fun writeDate(message: ParsedMessage, target: FieldPath, previous: Hl7T
     return Er7.writeRaw(message, target, value)
 }
 
+// True when delimiters collide or look like letters. EditorToolbar blocks bad edits with it.
 internal fun delimiterIssue(next: Delimiters): Boolean {
     val all = listOf(next.field, next.component, next.repetition, next.escape, next.subcomponent)
     return all.toSet().size != all.size || all.any { it.isLetterOrDigit() || it.isWhitespace() }
 }
 
+// Offset and whether the pointer is on text. textHit returns it for gesture handling.
 data class TextHit(val offset: Int, val onText: Boolean)
 
+// Clamps tip coordinates inside the viewport. Editor.tipSpot and RawEditor call it.
 internal fun tipSpot(anchorX: Float, anchorY: Float, tipWidth: Int, tipHeight: Int, boundsWidth: Int, boundsHeight: Int, gap: Int = 16): IntOffset {
     val margin = 8
     var x = anchorX.toInt() + gap
@@ -157,6 +169,7 @@ internal fun tipSpot(anchorX: Float, anchorY: Float, tipWidth: Int, tipHeight: I
     return IntOffset(x.coerceIn(margin, maxX), y.coerceIn(margin, maxY))
 }
 
+// Resolves a pointer position to a caret hit. RawEditor hitAt calls it.
 internal fun textHit(layout: TextLayoutResult, position: Offset, length: Int): TextHit {
     if (length <= 0 || layout.lineCount == 0) return TextHit(0, false)
     val lastLine = layout.lineCount - 1
@@ -171,5 +184,6 @@ internal fun textHit(layout: TextLayoutResult, position: Offset, length: Int): T
     return TextHit(layout.getOffsetForPosition(Offset(position.x.coerceIn(left, right), position.y.coerceAtLeast(0f))).coerceIn(0, length), true)
 }
 
+// Builds search marks for the current hit. Editor.searchMarks and Workspace call it.
 internal fun searchMarks(message: ParsedMessage, query: String, current: Int, normal: Color, active: Color): List<Mark> =
     Er7.find(message.text, query).mapIndexed { i, span -> Mark(span, if (i == current) MarkKind.SEARCH_CURRENT else MarkKind.SEARCH, if (i == current) active else normal) }

@@ -1,3 +1,4 @@
+// Raw message field with tooltip and highlighting. Workspace places it in the message pane.
 package hl7lookup.editor
 
 import androidx.compose.foundation.background
@@ -96,35 +97,47 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 
+// Facade for caret info, search marks and date writes. Workspace and the catalog call it.
 object Editor {
+    // Builds tooltip facts for the caret path. RawEditor and CursorTooltip call it.
     fun info(message: ParsedMessage, dictionary: Hl7Dictionary?, path: FieldPath, style: DateStyle, tableOverride: (String?) -> TableDef?): CursorInfo? =
         cursorInfo(message, dictionary, path, style, tableOverride)
+    // Turns a search query into colored marks. Workspace paints them in the raw editor.
     fun searchMarks(message: ParsedMessage, query: String, current: Int, normal: androidx.compose.ui.graphics.Color, active: androidx.compose.ui.graphics.Color): List<Mark> =
         hl7lookup.editor.searchMarks(message, query, current, normal, active)
+    // Writes a local date into the message. DateEditor and the facade call it.
     fun writeDate(message: ParsedMessage, target: FieldPath, info: CursorInfo, input: String, style: DateStyle): String? =
         hl7lookup.editor.writeDate(message, target, info.date, input, style)
+    // Places a tooltip inside the viewport. RawEditor calls it for hover and pinned tips.
     fun tipSpot(anchorX: Float, anchorY: Float, tipWidth: Int, tipHeight: Int, boundsWidth: Int, boundsHeight: Int) =
         hl7lookup.editor.tipSpot(anchorX, anchorY, tipWidth, tipHeight, boundsWidth, boundsHeight)
+    // Colors ER7 delimiters and segments. Catalog HighlightedMessage and the facade call it.
     fun highlight(text: String, colors: EditorColors): androidx.compose.ui.text.AnnotatedString =
         styled(text, Er7.parse(text), colors, emptyList())
+    // Exposes tooltip wording. Workspace and screens read it via tr().
     fun texts() = EditorTexts
 }
 
+// Tracks clickable regions on a tooltip. RawEditor hit-tests pointer presses against it.
 private class TipZones {
     private val rects = LinkedHashMap<String, Rect>()
     private val actions = LinkedHashMap<String, () -> Unit>()
+    // Records a tooltip child's bounds. zone() registers each interactive piece.
     fun rect(key: String, rect: Rect) {
         rects[key] = rect
     }
+    // Binds a click action to a tooltip zone. zone() registers close and date controls.
     fun action(key: String, run: () -> Unit) {
         actions[key] = run
     }
+    // Finds the tightest action under a point. Gesture handling calls it on press.
     fun hit(point: Offset): (() -> Unit)? {
         val key = rects.entries.filter { it.value.contains(point) }.minByOrNull { it.value.width * it.value.height }?.key ?: return null
         return actions[key]
     }
 }
 
+// Pins a child at pixel coordinates inside the viewport. Hover and pinned tips use it.
 private fun Modifier.placeAt(x: Int, y: Int): Modifier = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
     val left = x.coerceIn(0, (constraints.maxWidth - placeable.width).coerceAtLeast(0))
@@ -134,11 +147,14 @@ private fun Modifier.placeAt(x: Int, y: Int): Modifier = layout { measurable, co
     }
 }
 
+// Applies syntax and search colors to the text field. RawEditor installs it as the visual transform.
 private class HighlightTransformation(private val message: ParsedMessage, private val colors: EditorColors, private val marks: List<Mark>) : VisualTransformation {
+    // Builds the colored AnnotatedString for display. BasicTextField asks for it on each paint.
     override fun filter(text: androidx.compose.ui.text.AnnotatedString): TransformedText =
         TransformedText(styled(text.text, message, colors, marks), OffsetMapping.Identity)
 }
 
+// Editable ER7 field with hover and pinned tooltips. Workspace places it in the message pane.
 @Composable
 fun RawEditor(
     text: String,
@@ -205,12 +221,14 @@ fun RawEditor(
     val allMarks = if (selectedSpan != null) listOf(Mark(selectedSpan, MarkKind.SELECTION, palette.cursorField)) + marks else marks
     val transformation = remember(message, allMarks, palette) { HighlightTransformation(message, colors, allMarks) }
 
+    // Maps a pointer position to a text offset. Gesture handlers call it on move and press.
     fun hitAt(position: Offset): TextHit {
         val current = layout ?: return TextHit(0, false)
         val pad = with(density) { 10.dp.toPx() }
         return textHit(current, Offset(position.x - pad, position.y - pad), value.text.length)
     }
 
+    // Converts field-local coordinates into the scroll viewport. Hover and pin use it for tip placement.
     fun inView(local: Offset): Offset {
         val field = fieldBounds.value
         val view = viewBounds.value
@@ -220,16 +238,19 @@ fun RawEditor(
         return Offset(root.x - origin.x, root.y - origin.y)
     }
 
+    // Reports the field path under the caret. Value changes and empty clicks call it.
     fun reportCursor(offset: Int) {
         onCursor(Er7.locate(message, offset))
     }
 
+    // Clears pinned and hover tooltips. Escape and range selection call it.
     fun closeTooltip() {
         pinned = false
         pinnedPath = null
         hoverPath = null
     }
 
+    // Pins a tooltip on a field path. Text presses call it when the path resolves.
     fun pin(path: FieldPath, at: Offset) {
         pinned = true
         pinnedPath = path
@@ -238,6 +259,7 @@ fun RawEditor(
     }
 
     val gestures = remember {
+        // Holds gesture callbacks shared with pointerInput. RawEditor fills them each recomposition.
         object {
             var hit: (Offset) -> TextHit = { TextHit(0, false) }
             var moved: (Offset, Boolean, Int) -> Unit = { _, _, _ -> }
@@ -273,6 +295,7 @@ fun RawEditor(
         } else false
     }
 
+    // Registers a tooltip region and its click. CursorTooltip wraps interactive children with it.
     fun zone(key: String, run: () -> Unit): Modifier {
         zones.action(key, run)
         return Modifier.onGloballyPositioned { coords ->
@@ -284,6 +307,7 @@ fun RawEditor(
         }
     }
 
+    // Sets a drag selection range and clears tips. Empty-area press handling calls it.
     fun selectRange(anchor: Int, end: Int) {
         val length = value.text.length
         val start = anchor.coerceIn(0, length)
@@ -391,6 +415,7 @@ fun RawEditor(
     }
 }
 
+// Delimiter editors and the tooltip toggle. RawEditor shows it above the text field.
 @Composable
 private fun EditorToolbar(message: ParsedMessage, tooltips: Boolean, onTooltips: (Boolean) -> Unit, onTextChange: (String) -> Unit) {
     val palette = LocalPalette.current
@@ -427,6 +452,7 @@ private fun EditorToolbar(message: ParsedMessage, tooltips: Boolean, onTooltips:
     }
 }
 
+// Single-character delimiter field. EditorToolbar repeats it for each delimiter.
 @Composable
 private fun DelimiterInput(label: String, char: Char, enabled: Boolean, onChange: (Char) -> Unit) {
     val palette = LocalPalette.current
@@ -445,6 +471,7 @@ private fun DelimiterInput(label: String, char: Char, enabled: Boolean, onChange
     }
 }
 
+// Field facts, table pickers and date edit. RawEditor shows hover and pinned versions.
 @Composable
 fun CursorTooltip(
     info: CursorInfo,
@@ -511,6 +538,7 @@ fun CursorTooltip(
     }
 }
 
+// Date text field and calendar opener inside a tip. CursorTooltip embeds it for date paths.
 @Composable
 private fun DateEditor(
     info: CursorInfo,
@@ -525,9 +553,11 @@ private fun DateEditor(
     var picker by remember { mutableStateOf(false) }
     var input by remember(info.path, info.dateText) { mutableStateOf(info.date?.let { Hl7Dates.format(it, style) } ?: "") }
     val valid = Hl7Dates.parseInput(input, style) != null
+    // Writes the typed date into the message. Submit on the date input calls it.
     fun apply() {
         writeDate(message, target, info.date, input, style)?.let(onTextChange)
     }
+    // Opens the calendar modal. The Pick date button calls it.
     fun openPicker() {
         picker = true
     }
@@ -546,6 +576,7 @@ private fun DateEditor(
     if (input.isNotEmpty() && !valid) Label(tr(EditorTexts.invalidDate, Hl7Dates.inputHint(style)), color = palette.warning, size = 11.sp)
 }
 
+// Calendar modal that writes a picked day. DateEditor opens it from the tip.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TooltipDatePicker(

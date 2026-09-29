@@ -1,7 +1,9 @@
+// Highlight dialog wording. highlighting/Index reads it.
 package hl7lookup.highlighting
 
 import hl7lookup.i18n.Text
 
+// Highlight dialog wording. highlighting/Index reads it via texts().
 object HighlightTexts {
     val title = Text("Highlighting", "Hervorhebung")
     val spec = Text("Field (e.g. PID-5 or OBX-5.1)", "Feld (z. B. PID-5 oder OBX-5.1)")

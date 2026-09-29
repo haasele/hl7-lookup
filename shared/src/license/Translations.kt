@@ -1,7 +1,9 @@
+// Notice text and component credits. license/Index reads them.
 package hl7lookup.license
 
 import hl7lookup.i18n.Text
 
+// English and German notice strings. Index and LicenseDialog read them via tr().
 object LicenseTexts {
     val menu = Text("License…", "Lizenz…")
     val title = Text("License", "Lizenz")

@@ -1,3 +1,4 @@
+// Interface-rule editor. Workspace applies the active interface to validation and highlights.
 package hl7lookup.interfaces
 
 import androidx.compose.foundation.background
@@ -41,19 +42,31 @@ import hl7lookup.theme.LocalPalette
 import hl7lookup.theme.Theme
 import hl7lookup.validation.Finding
 
+// Facade for interface rules, tables and files. Workspace and InterfacesDialog call it.
 object Interfaces {
+    // Runs interface rules as findings. Workspace merges them into validation.
     fun findings(definition: InterfaceDefinition?, message: ParsedMessage): List<Finding> = applyInterface(definition, message)
+    // Looks up a custom table by id. Editor table overrides ask for it.
     fun table(definition: InterfaceDefinition?, id: String?): TableDef? = tableOf(definition, id)
+    // Custom table for the field under the caret. Editor tooltips use it when present.
     fun tableAt(definition: InterfaceDefinition?, message: ParsedMessage, path: FieldPath): TableDef? = specTable(definition, message, path)
+    // Highlight rules sourced from the interface. Workspace syncs them into Highlights.
     fun highlights(definition: InterfaceDefinition?): List<HighlightRule> = highlightRulesOf(definition)
+    // Serializes definitions to JSON. Export actions call it.
     fun encode(definitions: List<InterfaceDefinition>): String = encodeFile(definitions)
+    // Parses an interface file or single definition. Import actions call it.
     fun decode(content: String): List<InterfaceDefinition>? = decodeFile(content)
+    // Builds a draft from required fields in the message. InterfacesDialog New from message calls it.
     fun draft(id: String, name: String, message: ParsedMessage, ruleId: () -> String): InterfaceDefinition = draftFrom(id, name, message, ruleId)
+    // Runs the interface over a message list. InterfacesDialog Check list calls it.
     fun check(definition: InterfaceDefinition, texts: List<String>): List<ListResult> = runOnList(definition, texts)
+    // Wording for a rule kind. InterfacesDialog labels the kind dropdown with it.
     fun ruleName(kind: RuleKind): Text = ruleNames.getValue(kind)
+    // Exposes interface wording. Workspace reads it via tr().
     fun texts() = InterfaceTexts
 }
 
+// Manage dialog for definitions and list checks. Workspace opens it from Tools.
 @Composable
 fun InterfacesDialog(
     store: InterfaceStore,
@@ -125,6 +138,7 @@ fun InterfacesDialog(
     }
 }
 
+// Edits name, type, rules and tables. InterfacesDialog shows it for the selected item.
 @Composable
 private fun InterfaceEditor(definition: InterfaceDefinition, versions: List<String>, newId: () -> String, onChange: (InterfaceDefinition) -> Unit) {
     val palette = LocalPalette.current
@@ -143,6 +157,7 @@ private fun InterfaceEditor(definition: InterfaceDefinition, versions: List<Stri
     Label(tr(InterfaceTexts.rules), weight = FontWeight.SemiBold)
     for (rule in definition.rules) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Patches one rule in the definition. Rule row editors call it on each change.
             fun update(next: InterfaceRule) = onChange(definition.copy(rules = definition.rules.map { if (it.id == rule.id) next else it }))
             Dropdown(rule.kind, RuleKind.entries, { tr(ruleNames.getValue(it)) }, { update(rule.copy(kind = it)) }, Modifier.width(150.dp))
             TextInput(rule.spec, { update(rule.copy(spec = it.uppercase())) }, Modifier.width(110.dp), mono = true, placeholder = tr(InterfaceTexts.specHint), error = rule.spec.isNotBlank() && !Highlights.valid(rule.spec))
@@ -167,6 +182,7 @@ private fun InterfaceEditor(definition: InterfaceDefinition, versions: List<Stri
     Label(tr(InterfaceTexts.tableHint), color = palette.textDim, size = 11.sp)
     for (table in definition.tables) {
         var entriesText by remember(table.id, definition.id) { mutableStateOf(formatEntries(table.entries)) }
+        // Patches one custom table in the definition. Table editors call it on each change.
         fun update(next: CustomTable) = onChange(definition.copy(tables = definition.tables.map { if (it === table) next else it }))
         Column(Modifier.fillMaxWidth().background(palette.surfaceRaised).padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {

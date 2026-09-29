@@ -1,7 +1,9 @@
+// Compare wording. compare/Index reads it.
 package hl7lookup.compare
 
 import hl7lookup.i18n.Text
 
+// Compare dialog wording. compare/Index reads it via texts().
 object CompareTexts {
     val title = Text("Compare messages", "Nachrichten vergleichen")
     val menu = Text("Compare…", "Vergleichen…")

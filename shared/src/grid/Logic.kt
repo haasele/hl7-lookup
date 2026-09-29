@@ -1,3 +1,4 @@
+// Which segment the grid follows and which cells are empty. grid/Index calls it.
 package hl7lookup.grid
 
 import hl7lookup.dictionary.Dictionaries
@@ -7,6 +8,7 @@ import hl7lookup.document.Er7
 import hl7lookup.document.FieldPath
 import hl7lookup.document.ParsedMessage
 
+// One grid cell: path, label, value and editability. gridRows builds these for FieldGrid.
 data class GridRow(
     val path: FieldPath,
     val level: NodeLevel,
@@ -20,15 +22,19 @@ data class GridRow(
     val required: Boolean,
 )
 
+// Segment option for the dropdown. segmentChoices builds the list FieldGrid picks from.
 data class SegmentChoice(val index: Int, val name: String, val occurrence: Int, val description: String?)
 
+// Maps each segment to a dropdown choice. Grid.segments and FieldGrid call it.
 internal fun segmentChoices(message: ParsedMessage, dictionary: Hl7Dictionary?): List<SegmentChoice> =
     message.segments.map { SegmentChoice(it.index, it.name, Er7.occurrence(message, it.index), Dictionaries.segment(dictionary, it.name)?.description) }
 
 private val primitive = setOf("ST", "ID", "IS", "NM", "SI", "TX", "FT", "DT", "DTM", "TM", "GTS", "varies")
 
+// Walks fields, components and subs into rows. Grid.rows and FieldGrid call it.
 internal fun gridRows(message: ParsedMessage, dictionary: Hl7Dictionary?, segmentIndex: Int, showEmpty: Boolean, keep: FieldPath? = null): List<GridRow> {
     val segment = message.segments.getOrNull(segmentIndex) ?: return emptyList()
+    // Keeps an empty row when it contains the selection. gridRows uses it while filtering empties.
     fun kept(path: FieldPath) = keep != null && Er7.contains(path, keep)
     val definition = Dictionaries.segment(dictionary, segment.name)
     val defined = definition?.fields?.map { it.number }.orEmpty()
@@ -84,6 +90,8 @@ internal fun gridRows(message: ParsedMessage, dictionary: Hl7Dictionary?, segmen
     return rows
 }
 
+// Picks the segment index from selection or a fallback. FieldGrid calls it after the picker updates.
 internal fun segmentOfSelection(selection: FieldPath?, fallback: Int): Int = selection?.segment ?: fallback
 
+// True for DT, DTM or TS. ValueEditor shows the calendar when it matches.
 internal fun isDateType(datatype: String): Boolean = datatype in setOf("DT", "DTM", "TS")

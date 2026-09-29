@@ -1,3 +1,4 @@
+// Wording for generated dictionary names. engine/catalog/Index reads it.
 package hl7lookup.desktop.engine.catalog
 
 internal val segmentDescriptions: Map<String, String> = mapOf(

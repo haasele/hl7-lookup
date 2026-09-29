@@ -1,10 +1,13 @@
+// Counts across the open messages. statistics/Index calls it.
 package hl7lookup.statistics
 
 import hl7lookup.document.Er7
 import hl7lookup.document.PathSpec
 
+// One distinct value with its count and first message. FieldStatistics.rows hold these.
 data class StatRow(val value: String, val count: Int, val firstMessage: Int)
 
+// Full count result for one PathSpec. Statistics.compute returns this for the panel.
 data class FieldStatistics(
     val spec: PathSpec,
     val label: String,
@@ -14,6 +17,7 @@ data class FieldStatistics(
     val total: Int,
 )
 
+// Walks messages and tallies values at a path. Statistics.compute delegates here.
 internal fun computeStatistics(messages: List<String>, spec: PathSpec): FieldStatistics {
     val counts = linkedMapOf<String, Int>()
     val first = mutableMapOf<String, Int>()

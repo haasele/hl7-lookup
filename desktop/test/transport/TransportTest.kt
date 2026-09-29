@@ -1,3 +1,4 @@
+// Locks MLLP and HTTP send and ack. Calls desktop transport/Index.
 package hl7lookup.desktop.transport
 
 import hl7lookup.engine.Endpoint
@@ -11,12 +12,15 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+// Checks MLLP/HTTP send, ack, poll and diagnosis. Calls desktop transport helpers.
 class TransportTest {
     private val order = "MSH|^~\\&|CPOE|NORTH|LAB|CENTRAL|20260301091500||ORM^O01|T1|P|2.4\rPID|1||4711"
     private val ack = "MSH|^~\\&|LAB|CENTRAL|CPOE|NORTH|20260301091501||ACK^O01|T2|P|2.4\rMSA|AA|T1"
 
+    // Picks an unused local port. Receiver tests call it before hub.start.
     private fun freePort() = ServerSocket(0).use { it.localPort }
 
+    // Asserts ACK detection from MSH-9. Calls isAcknowledgement.
     @Test
     fun recognisesAcknowledgements() {
         assertTrue(isAcknowledgement(ack))
@@ -25,6 +29,7 @@ class TransportTest {
         assertFalse(isAcknowledgement("PID|1"))
     }
 
+    // Sends MLLP to a local receiver and expects an ACK. Calls send and withReceiver.
     @Test
     fun mllpLoopbackReturnsTheAcknowledgement() = withReceiver(Protocol.MLLP) { port ->
         val result = send(Endpoint(Protocol.MLLP, "127.0.0.1", port, timeoutMillis = 3000), order)
@@ -32,6 +37,7 @@ class TransportTest {
         assertTrue(isAcknowledgement(result.response.orEmpty()), result.response)
     }
 
+    // Asserts sending an ACK returns immediately. Calls send and withReceiver.
     @Test
     fun outgoingAcknowledgementDoesNotWaitForAReply() = withReceiver(Protocol.MLLP) { port ->
         val result = send(Endpoint(Protocol.MLLP, "127.0.0.1", port, timeoutMillis = 3000), ack)
@@ -40,6 +46,7 @@ class TransportTest {
         assertTrue(result.durationMillis < 3000, "took ${result.durationMillis} ms")
     }
 
+    // Sends HTTP HL7 to a local receiver and expects MSA. Calls send and withReceiver.
     @Test
     fun httpLoopbackReturnsTheAcknowledgement() = withReceiver(Protocol.HTTP) { port ->
         val result = send(Endpoint(Protocol.HTTP, "127.0.0.1", port, "/hl7", timeoutMillis = 3000), order)
@@ -47,6 +54,7 @@ class TransportTest {
         assertTrue(result.response.orEmpty().contains("MSA|AA|T1"), result.response)
     }
 
+    // Asserts poll filters by sequence and epochs differ. Calls TransportHub.poll and send.
     @Test
     fun pollSkipsEventsAlreadySeen() {
         val hub = TransportHub { ack }
@@ -65,6 +73,7 @@ class TransportTest {
         assertTrue(TransportHub { ack }.poll(0).epoch != hub.poll(0).epoch)
     }
 
+    // Asserts diagnose succeeds against a live MLLP port. Calls diagnose and TransportHub.
     @Test
     fun diagnosisReachesAnOpenReceiver() {
         val hub = TransportHub { ack }
@@ -79,6 +88,7 @@ class TransportTest {
         }
     }
 
+    // Asserts send to a closed port yields REFUSED. Calls send.
     @Test
     fun closedPortIsReportedAsRefused() {
         val result = send(Endpoint(Protocol.MLLP, "127.0.0.1", freePort(), timeoutMillis = 1000), order)
@@ -86,6 +96,7 @@ class TransportTest {
         assertEquals(FailureCause.REFUSED, result.failure)
     }
 
+    // Starts a hub receiver, runs a block, then asserts one receipt. Loopback tests call it.
     private fun withReceiver(protocol: Protocol, block: (Int) -> Unit) {
         val hub = TransportHub { text -> if (isAcknowledgement(text)) null else ack }
         val port = freePort()

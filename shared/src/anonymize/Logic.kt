@@ -1,3 +1,4 @@
+// Replacement of identifiers and the stable date shift. anonymize/Index calls it.
 package hl7lookup.anonymize
 
 import androidx.compose.runtime.getValue
@@ -15,10 +16,13 @@ import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
+// Kinds of values to replace. Target maps components to these; replacement() switches on them.
 enum class Kind { FAMILY, GIVEN, IDENTIFIER, STREET, CITY, POSTAL, PHONE, EMAIL, TEXT, ORGANIZATION }
 
+// Whether to anonymize the current message or the whole tab. AnonymizeDialog picks one.
 enum class AnonymizeScope { CURRENT, TAB }
 
+// Which categories and scope to run. AnonymizeDialog edits it; Anonymizer.run applies it.
 data class AnonymizeOptions(
     val scope: AnonymizeScope = AnonymizeScope.CURRENT,
     val newTab: Boolean = true,
@@ -30,11 +34,14 @@ data class AnonymizeOptions(
     val shiftDates: Boolean = true,
 )
 
+// Field number and component kinds for a segment. targets lists these per segment name.
 internal data class Target(val field: Int, val components: Map<Int, Kind>)
 
+// Seed, date shift and remembered replacements. Anonymizer persists this cache.
 @Serializable
 data class AnonymizeCache(val seed: Long, val shiftDays: Int, val values: Map<String, String> = emptyMap())
 
+// Word lists for fake names and text. replacement() picks from the englishWordbook.
 internal data class Wordbook(
     val families: List<String>,
     val givens: List<String>,
@@ -77,18 +84,22 @@ internal val targets: Map<String, List<Target>> = mapOf(
 
 private val freeTextTypes = setOf("TX", "FT", "ST", "CF")
 
+// Loads the cache or builds a fresh one. Anonymizer constructs state from it.
 internal fun loadCache(platform: Platform, fresh: () -> AnonymizeCache): AnonymizeCache =
     platform.loadValue(cacheKey)?.let { runCatching { cacheJson.decodeFromString(AnonymizeCache.serializer(), it) }.getOrNull() } ?: fresh()
 
+// Persists the cache on the platform. Anonymizer.run and reset write through it.
 internal fun saveCache(platform: Platform, cache: AnonymizeCache) =
     platform.storeValue(cacheKey, cacheJson.encodeToString(AnonymizeCache.serializer(), cache))
 
+// New seed and negative day shift. loadCache and reset call it when starting clean.
 internal fun freshCache(millis: Long): AnonymizeCache {
     val seed = millis xor 0x5DEECE66DL
     val days = -(30 + (mix(seed, "shift") % 700).toInt())
     return AnonymizeCache(seed, days)
 }
 
+// Stable hash mixing seed and text. pick, scramble and freshCache call it.
 private fun mix(seed: Long, text: String): Long {
     var hash = seed xor -0x340d631b7bdddcdbL
     for (char in text) {
@@ -98,8 +109,10 @@ private fun mix(seed: Long, text: String): Long {
     return hash ushr 1
 }
 
+// Picks a list entry from a stable hash. replacement() chooses names and places with it.
 private fun pick(list: List<String>, seed: Long, original: String): String = list[(mix(seed, original) % list.size).toInt()]
 
+// Keeps digit and letter shapes while remapping. replacement() uses it for ids and phones.
 private fun scramble(value: String, seed: Long): String {
     var state = mix(seed, value)
     return buildString {
@@ -118,11 +131,13 @@ private fun scramble(value: String, seed: Long): String {
     }
 }
 
+// Builds fake prose from the word list. replacement() uses it for free text.
 private fun textLike(value: String, seed: Long, words: List<String>): String {
     val count = value.split(' ').count { it.isNotBlank() }.coerceIn(1, 60)
     return (0 until count).joinToString(" ") { pick(words, seed + it, "$value#$it") }.replaceFirstChar { it.uppercase() } + "."
 }
 
+// Maps a kind and original value to a fake. editsFor caches results through it.
 internal fun replacement(kind: Kind, value: String, cache: AnonymizeCache, book: Wordbook): String = when (kind) {
     Kind.FAMILY -> pick(book.families, cache.seed, value.uppercase())
     Kind.GIVEN -> pick(book.givens, cache.seed, value.uppercase())
@@ -134,6 +149,7 @@ internal fun replacement(kind: Kind, value: String, cache: AnonymizeCache, book:
     Kind.IDENTIFIER, Kind.POSTAL, Kind.PHONE -> scramble(value, cache.seed)
 }
 
+// Whether options enable a kind. editsFor skips disabled kinds with it.
 private fun enabled(kind: Kind, options: AnonymizeOptions): Boolean = when (kind) {
     Kind.FAMILY, Kind.GIVEN, Kind.ORGANIZATION -> options.names
     Kind.IDENTIFIER -> options.identifiers
@@ -142,12 +158,16 @@ private fun enabled(kind: Kind, options: AnonymizeOptions): Boolean = when (kind
     Kind.TEXT -> options.freeText
 }
 
+// Heuristic for date-looking raw values. editsFor shifts dates when the dictionary is thin.
 private fun looksLikeDate(raw: String): Boolean = raw.length >= 8 && raw.take(8).all { it.isDigit() } && Hl7Dates.isValid(raw)
 
+// One path rewrite to apply. editsFor builds these; applyEdits writes them.
 internal class Edit(val path: FieldPath, val value: String)
 
+// Collects replacement edits for a message. anonymizeText asks it before writing.
 internal fun editsFor(message: ParsedMessage, dictionary: Hl7Dictionary?, options: AnonymizeOptions, cache: MutableMap<String, String>, state: AnonymizeCache, book: Wordbook): List<Edit> {
     val edits = mutableListOf<Edit>()
+    // Queues a replacement for one path. editsFor calls it for each targeted component.
     fun replace(path: FieldPath, kind: Kind) {
         val value = Er7.value(message, path)
         if (value.isBlank() || value == "\"\"") return
@@ -200,6 +220,7 @@ internal fun editsFor(message: ParsedMessage, dictionary: Hl7Dictionary?, option
     return edits.distinctBy { it.path }
 }
 
+// Writes edits from the end of the message forward. anonymizeText applies the edit list with it.
 internal fun applyEdits(text: String, edits: List<Edit>): String {
     var current = text
     val ordered = edits.sortedWith(compareByDescending<Edit> { it.path.segment }.thenByDescending { it.path.field }.thenByDescending { it.path.repetition }.thenByDescending { it.path.component })
@@ -209,10 +230,12 @@ internal fun applyEdits(text: String, edits: List<Edit>): String {
     return current
 }
 
+// Runs anonymize over texts and persists the cache. AnonymizeDialog drives it.
 class Anonymizer(private val platform: Platform) {
     var cache by mutableStateOf(loadCache(platform) { freshCache(platform.nowMillis()) })
         private set
 
+    // Anonymizes each text with progress. AnonymizeDialog start launches it.
     suspend fun run(
         texts: List<String>,
         dictionary: (String) -> Hl7Dictionary?,
@@ -231,12 +254,14 @@ class Anonymizer(private val platform: Platform) {
         return result
     }
 
+    // Clears remembered replacements. AnonymizeDialog reset calls it.
     fun reset() {
         cache = freshCache(platform.nowMillis())
         saveCache(platform, cache)
     }
 }
 
+// Parses, edits and rewrites one message. Anonymizer.run maps each text through it.
 internal fun anonymizeText(text: String, dictionary: Hl7Dictionary?, options: AnonymizeOptions, cache: MutableMap<String, String>, state: AnonymizeCache, book: Wordbook): String {
     val message = Er7.parse(text)
     if (message.isEmpty) return text

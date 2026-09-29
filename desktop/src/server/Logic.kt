@@ -1,3 +1,4 @@
+// API routes and static files for the browser client. server/Index runs them.
 package hl7lookup.desktop.server
 
 import com.sun.net.httpserver.HttpExchange
@@ -30,6 +31,7 @@ internal const val CLIENT_HEADER = "X-HL7-Lookup"
 
 private val allowedHosts = setOf("localhost", "127.0.0.1", "[::1]")
 
+// Picks a Content-Type from a file extension. files() uses it when serving static assets.
 internal fun contentTypeOf(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {
     "html" -> "text/html; charset=utf-8"
     "mjs", "js" -> "text/javascript; charset=utf-8"
@@ -41,20 +43,24 @@ internal fun contentTypeOf(name: String): String = when (name.substringAfterLast
     else -> "application/octet-stream"
 }
 
+// Rejects path traversal and defaults to index.html. files() calls it for GET paths.
 internal fun safePath(raw: String): String? {
     val path = raw.substringBefore('?').trimStart('/').ifEmpty { "index.html" }
     if (path.split('/').any { it == ".." || it.startsWith(".") }) return null
     return path
 }
 
+// Reads a classpath resource as bytes. staticFile falls back to it.
 private fun resource(name: String): ByteArray? =
     Thread.currentThread().contextClassLoader.getResourceAsStream(name)?.use { it.readBytes() }
 
+// Loads a web asset from disk or classpath. files() and hasBundle call it.
 internal fun staticFile(path: String, webDir: File?): ByteArray? {
     webDir?.resolve(path)?.takeIf { it.isFile && it.canonicalPath.startsWith(webDir.canonicalPath) }?.let { return it.readBytes() }
     return resource("web/$path") ?: resource(path)
 }
 
+// Finds the newest built web.mjs folder. Servers.findBundle and LocalServer discovery call it.
 internal fun findWebBundle(start: File): File? {
     val roots = listOf(start.resolve("build"), start.resolve("../build"), start.resolve("../../build")).filter { it.isDirectory }
     return roots.asSequence()
@@ -64,11 +70,13 @@ internal fun findWebBundle(start: File): File? {
         ?.parentFile
 }
 
+// Allows only localhost Host headers. api() and files() gate on it.
 private fun hostAllowed(exchange: HttpExchange): Boolean {
     val host = exchange.requestHeaders.getFirst("Host")?.substringBeforeLast(':')?.lowercase() ?: return false
     return host in allowedHosts
 }
 
+// Writes status, headers and body to an exchange. json and files call it.
 private fun respond(exchange: HttpExchange, status: Int, bytes: ByteArray, type: String) {
     exchange.responseHeaders.add("Content-Type", type)
     exchange.responseHeaders.add("Cache-Control", "no-cache")
@@ -77,8 +85,10 @@ private fun respond(exchange: HttpExchange, status: Int, bytes: ByteArray, type:
     if (bytes.isNotEmpty()) exchange.responseBody.write(bytes)
 }
 
+// Sends a JSON body with UTF-8 type. api() uses it for every API response.
 private fun json(exchange: HttpExchange, status: Int, body: String) = respond(exchange, status, body.toByteArray(Charsets.UTF_8), "application/json; charset=utf-8")
 
+// Routes an ApiRoute to engine or transport and encodes JSON. api() calls it for POST /api.
 internal fun dispatch(route: ApiRoute, body: String, engine: Hl7Engine, transport: Hl7Transport): String = runBlocking {
     val codec = Engines.json()
     when (route) {
@@ -97,13 +107,16 @@ internal fun dispatch(route: ApiRoute, body: String, engine: Hl7Engine, transpor
     }
 }
 
+// Public handle over LocalServer with address and stop. Servers.start returns it to the window.
 class ServerHandle internal constructor(private val server: LocalServer) {
     val port: Int get() = server.port
     val address: String get() = "http://localhost:${server.port}/"
     val hasWebClient: Boolean get() = server.hasBundle
+    // Stops the underlying HTTP server. window shutdown and Servers callers use it.
     fun stop() = server.stop()
 }
 
+// Loopback HTTP server for /api and static web files. Servers.start constructs and starts it.
 internal class LocalServer(
     private val engine: Hl7Engine,
     private val transport: Hl7Transport,
@@ -123,6 +136,7 @@ internal class LocalServer(
         server.executor = Executors.newFixedThreadPool(8) { runnable -> Thread(runnable, "hl7lookup-server").apply { isDaemon = true } }
     }
 
+    // Handles POST /api routes with host and header checks. LocalServer registers it on /api/.
     private fun api(exchange: HttpExchange) {
         val codec = Engines.json()
         val route = routes[exchange.requestURI.path]
@@ -140,6 +154,7 @@ internal class LocalServer(
         }
     }
 
+    // Serves GET static files for the browser client. LocalServer registers it on /.
     private fun files(exchange: HttpExchange) {
         if (!hostAllowed(exchange)) return respond(exchange, 403, ByteArray(0), "text/plain")
         if (exchange.requestMethod != "GET" && exchange.requestMethod != "HEAD") return respond(exchange, 405, ByteArray(0), "text/plain")
@@ -148,8 +163,10 @@ internal class LocalServer(
         respond(exchange, 200, if (exchange.requestMethod == "HEAD") ByteArray(0) else bytes, contentTypeOf(path))
     }
 
+    // Starts the HttpServer. Servers.start calls it after construction.
     fun start() = server.start()
 
+    // Stops the underlying HTTP server. window shutdown and Servers callers use it.
     fun stop() = server.stop(0)
 
     val hasBundle: Boolean get() = staticFile("web.mjs", webDir) != null

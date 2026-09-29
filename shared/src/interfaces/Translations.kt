@@ -1,7 +1,9 @@
+// Interface wording. interfaces/Index reads it.
 package hl7lookup.interfaces
 
 import hl7lookup.i18n.Text
 
+// Interface dialog wording. interfaces/Index reads it via texts().
 object InterfaceTexts {
     val menu = Text("Interfaces", "Interfaces")
     val manage = Text("Manage interfaces…", "Interfaces verwalten…")

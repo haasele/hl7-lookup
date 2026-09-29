@@ -1,3 +1,4 @@
+// Message-filter dialog. Workspace opens it from Tools.
 package hl7lookup.filters
 
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +15,15 @@ import hl7lookup.datetime.Hl7Dates
 import hl7lookup.i18n.tr
 import hl7lookup.theme.LocalPalette
 
+// Facade for message-list filtering. Workspace keeps visible indices through it.
 object Filters {
+    // True when a message passes the filter. Workspace and the message list call it.
     fun accepts(filter: ListFilter, text: String, style: DateStyle): Boolean = hl7lookup.filters.accepts(filter, text, style)
+    // Exposes filter wording. Workspace reads it via tr().
     fun texts() = FilterTexts
 }
 
+// Dialog to edit type, date and text filters. Workspace opens it from Tools.
 @Composable
 fun FilterDialog(state: FilterState, style: DateStyle, onDismiss: () -> Unit) {
     val filter = state.filter

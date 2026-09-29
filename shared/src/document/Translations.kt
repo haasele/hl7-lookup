@@ -1,7 +1,9 @@
+// Document wording. document/Index reads it.
 package hl7lookup.document
 
 import hl7lookup.i18n.Text
 
+// Labels for segment, field and delimiter roles. document/Index reads it via Er7.texts.
 object DocumentTexts {
     val segment = Text("Segment", "Segment")
     val field = Text("Field", "Feld")

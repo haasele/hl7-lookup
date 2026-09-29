@@ -1,3 +1,4 @@
+// Rule checks merged with engine findings. validation/Index and workspace call Validation.
 package hl7lookup.validation
 
 import hl7lookup.datetime.Hl7Dates
@@ -10,11 +11,13 @@ import hl7lookup.document.ParsedMessage
 import hl7lookup.engine.InspectReport
 import hl7lookup.engine.Severity
 
+// Kinds of validation findings. Finding and findingTexts key off these.
 enum class FindingKind {
     REQUIRED, EMPTY, DATE, TABLE, LENGTH, REPETITION, NUMERIC, UNKNOWN_SEGMENT, UNKNOWN_FIELD, ENGINE,
     RULE_REQUIRED, RULE_EXPECTED, RULE_DATE, RULE_TABLE, RULE_TYPE,
 }
 
+// One validation hit with path and args. validateMessage and engineFindings build these.
 data class Finding(
     val severity: Severity,
     val kind: FindingKind,
@@ -28,6 +31,7 @@ private val numeric = Regex("^[+-]?(\\d+\\.?\\d*|\\.\\d+)$")
 
 private val primitiveTypes = setOf("ST", "ID", "IS", "NM", "SI", "TX", "FT", "DT", "DTM", "TM", "GTS", "SNM", "NUL", "varies")
 
+// Checks dates, numbers and table codes on a leaf. checkComposite calls it for primitives.
 internal fun checkLeaf(
     message: ParsedMessage,
     path: FieldPath,
@@ -51,6 +55,7 @@ internal fun checkLeaf(
     }
 }
 
+// Walks composite datatypes into leaf checks. validateMessage calls it per field repetition.
 internal fun checkComposite(
     message: ParsedMessage,
     dictionary: Hl7Dictionary,
@@ -81,6 +86,7 @@ internal fun checkComposite(
     }
 }
 
+// Runs all dictionary checks on a message. Validation.check and Workspace call it.
 internal fun validateMessage(message: ParsedMessage, dictionary: Hl7Dictionary?): List<Finding> {
     if (dictionary == null) return emptyList()
     val findings = mutableListOf<Finding>()
@@ -123,6 +129,7 @@ internal fun validateMessage(message: ParsedMessage, dictionary: Hl7Dictionary?)
     return findings
 }
 
+// Turns InspectReport rows into findings. Validation.fromEngine and Workspace call it.
 internal fun engineFindings(message: ParsedMessage, report: InspectReport?): List<Finding> {
     if (report == null) return emptyList()
     return report.findings.map { finding ->
@@ -134,6 +141,7 @@ internal fun engineFindings(message: ParsedMessage, report: InspectReport?): Lis
     }
 }
 
+// Merges groups and drops duplicate engine paths. Validation.merge and Workspace call it.
 internal fun mergeFindings(vararg groups: List<Finding>): List<Finding> {
     val merged = mutableListOf<Finding>()
     for (group in groups) {
@@ -145,8 +153,10 @@ internal fun mergeFindings(vararg groups: List<Finding>): List<Finding> {
     return merged.sortedWith(compareBy<Finding>({ it.severity.ordinal }, { it.path?.segment ?: -1 }, { it.path?.field ?: 0 }, { it.path?.component ?: 0 }))
 }
 
+// Finds the worst severity on or under a path. Validation.severityAt delegates to it.
 internal fun severityAt(findings: List<Finding>, path: FieldPath): Severity? =
     findings.filter { f -> f.path != null && (Er7.contains(f.path, path) || Er7.contains(path, f.path)) }
         .minByOrNull { it.severity.ordinal }?.severity
 
+// Groups findings by severity counts. Validation.counts and ValidationPanel call it.
 internal fun countBySeverity(findings: List<Finding>): Map<Severity, Int> = findings.groupingBy { it.severity }.eachCount()

@@ -1,3 +1,4 @@
+// Findings for the current message. Workspace shows them next to field statistics.
 package hl7lookup.validation
 
 import androidx.compose.foundation.layout.Arrangement
@@ -37,24 +38,35 @@ import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalPalette
 import hl7lookup.theme.Palette
 
+// Facade for rule checks and engine findings. Workspace merges and paints findings through it.
 object Validation {
+    // Runs dictionary field checks. Workspace and Validation.merge call it.
     fun check(message: ParsedMessage, dictionary: Hl7Dictionary?): List<Finding> = validateMessage(message, dictionary)
+    // Maps an engine report into findings. Workspace merges HAPI results through it.
     fun fromEngine(message: ParsedMessage, report: InspectReport?): List<Finding> = engineFindings(message, report)
+    // Merges finding groups without duplicate engine hits. Workspace combines local and engine lists.
     fun merge(vararg groups: List<Finding>): List<Finding> = mergeFindings(*groups)
+    // Worst severity covering a path. Editor and grid coloring ask for it.
     fun severityAt(findings: List<Finding>, path: FieldPath): Severity? = hl7lookup.validation.severityAt(findings, path)
+    // Counts findings per severity. ValidationPanel shows the summary from it.
     fun counts(findings: List<Finding>): Map<Severity, Int> = countBySeverity(findings)
+    // Wording template for a finding kind. findingText resolves the message through it.
     fun text(kind: FindingKind): Text = findingTexts.getValue(kind)
+    // Maps severity to palette colors. ValidationPanel and markers call it.
     fun color(severity: Severity, palette: Palette): Color = when (severity) {
         Severity.ERROR -> palette.error
         Severity.WARNING -> palette.warning
         Severity.INFO -> palette.link
     }
+    // Exposes validation wording. Workspace reads it via tr().
     fun texts() = ValidationTexts
 }
 
+// Localized text for one finding. ValidationPanel shows it in each row.
 @Composable
 fun findingText(finding: Finding): String = tr(findingTexts.getValue(finding.kind), *finding.args.toTypedArray())
 
+// List of findings with notes toggle. Workspace shows it beside field statistics.
 @Composable
 fun ValidationPanel(
     findings: List<Finding>,

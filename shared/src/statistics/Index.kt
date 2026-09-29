@@ -1,3 +1,4 @@
+// How often a field value appears in the tab. Workspace shows it under the grid.
 package hl7lookup.statistics
 
 import androidx.compose.foundation.layout.Column
@@ -24,11 +25,15 @@ import hl7lookup.document.PathSpec
 import hl7lookup.i18n.tr
 import hl7lookup.theme.LocalPalette
 
+// Facade for field-value counts. Workspace asks it to compute; panels show results.
 object Statistics {
+    // Counts field values across messages. Workspace calls this when a field is picked.
     fun compute(messages: List<String>, spec: PathSpec): FieldStatistics = computeStatistics(messages, spec)
+    // Hands out StatisticsTexts. Feature screens that need labels use this.
     fun texts() = StatisticsTexts
 }
 
+// Table of value frequencies for one field. Workspace shows it under the grid.
 @Composable
 fun StatisticsPanel(
     statistics: FieldStatistics?,

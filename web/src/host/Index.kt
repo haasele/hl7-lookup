@@ -1,3 +1,4 @@
+// Browser entry point. It loads the font and logo, then hosts Workspace against the desktop server.
 package hl7lookup.web.host
 
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +14,7 @@ import androidx.compose.ui.window.ComposeViewport
 import hl7lookup.workspace.Workspace
 import hl7lookup.workspace.Workspaces
 
+// Boots the browser app with RemoteEngine and hosts Workspace against the desktop server.
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     val platform = BrowserPlatform()

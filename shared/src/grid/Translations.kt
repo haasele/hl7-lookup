@@ -1,7 +1,9 @@
+// Grid wording. grid/Index reads it.
 package hl7lookup.grid
 
 import hl7lookup.i18n.Text
 
+// Grid wording. grid/Index reads it via texts().
 object GridTexts {
     val title = Text("Fields", "Felder")
     val segment = Text("Segment", "Segment")

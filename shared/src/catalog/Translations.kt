@@ -1,7 +1,9 @@
+// Wiki wording and the type and event sentences. catalog/Index reads them.
 package hl7lookup.catalog
 
 import hl7lookup.i18n.Text
 
+// Wiki chrome wording plus type and event meanings. catalog/Index reads it via texts().
 object CatalogTexts {
     val menu = Text("Wiki", "Wiki")
     val title = Text("Wiki", "Wiki")
@@ -30,8 +32,10 @@ object CatalogTexts {
     val aboutEvent = Text("{0}^{1} — {2}", "{0}^{1} — {2}")
     val aboutEventPlain = Text("{0}^{1}", "{0}^{1}")
 
+    // Plain sentence for a message type code. WikiScreen labels each type with it.
     fun typeMeaning(code: String): Text = typeMeanings[code] ?: Text("HL7 message type $code.", "HL7-Nachrichtentyp $code.")
 
+    // Plain sentence for a trigger event. WikiScreen labels each event with it.
     fun eventMeaning(code: String, fallback: String = ""): Text = eventMeanings[code]
         ?: fallback.takeIf { it.isNotBlank() }?.let { Text(it, it) }
         ?: Text("Trigger event $code.", "Ereignis $code.")

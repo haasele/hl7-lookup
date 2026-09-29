@@ -1,3 +1,4 @@
+// Colors and drawn icon shapes. theme/Index exposes them.
 package hl7lookup.theme
 
 import androidx.compose.ui.geometry.Offset
@@ -7,6 +8,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 
+// Color tokens for the dark UI; AppTheme builds one and LocalPalette provides it.
 data class Palette(
     val background: Color = Color(0xFF0E1520),
     val surface: Color = Color(0xFF141E2B),
@@ -35,6 +37,7 @@ data class Palette(
     val cursorField: Color = Color(0x553D8BFF),
 )
 
+// Named glyph kinds for toolbar icons; Icon and drawIconShape switch on these.
 enum class IconShape { Close, Plus, ChevronLeft, ChevronRight, ChevronDown, Filter, Calendar, Search, Send, Play, Stop, Edit, Trash, Check, Warning, Swap, Download, Upload, Menu, File }
 
 private val segmentColors = mapOf(
@@ -52,6 +55,7 @@ private val fallbackSegmentColors = listOf(
     Color(0xFF9AD0EC), Color(0xFFECC79A), Color(0xFFB9EC9A), Color(0xFFEC9AC8), Color(0xFF9AECDD), Color(0xFFD0B4F0),
 )
 
+// Resolves a segment name to a tint, falling back by hash; Theme.segmentColor calls this.
 internal fun colorForSegment(name: String): Color =
     segmentColors[name] ?: fallbackSegmentColors[(name.hashCode() and 0x7FFFFFFF) % fallbackSegmentColors.size]
 
@@ -59,14 +63,18 @@ internal val highlightColors = listOf(
     Color(0xFFFFD54F), Color(0xFF4FC3F7), Color(0xFFAED581), Color(0xFFF06292), Color(0xFFBA68C8), Color(0xFFFF8A65),
 )
 
+// Cycles a highlight tint by index; Theme.highlight calls this.
 internal fun highlightColor(index: Int): Color = highlightColors[index.mod(highlightColors.size)]
 
+// Strokes or fills one icon glyph into a DrawScope; Icon calls this.
 internal fun drawIconShape(scope: DrawScope, shape: IconShape, color: Color) {
     val w = scope.size.width
     val h = scope.size.height
     val stroke = Stroke(width = (w / 8f).coerceAtLeast(1.5f), cap = StrokeCap.Round)
+    // Draws one scaled stroke segment; drawIconShape uses this for line icons.
     fun line(x1: Float, y1: Float, x2: Float, y2: Float) =
         scope.drawLine(color, Offset(w * x1, h * y1), Offset(w * x2, h * y2), stroke.width, StrokeCap.Round)
+    // Builds and draws a scaled path; drawIconShape uses this for filled or stroked shapes.
     fun path(vararg points: Pair<Float, Float>, close: Boolean = false, fill: Boolean = false) {
         val p = Path()
         points.forEachIndexed { i, (x, y) -> if (i == 0) p.moveTo(w * x, h * y) else p.lineTo(w * x, h * y) }

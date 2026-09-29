@@ -1,7 +1,9 @@
+// Tooltip and delimiter wording. editor/Index reads it.
 package hl7lookup.editor
 
 import hl7lookup.i18n.Text
 
+// Tooltip and delimiter wording. editor/Index reads it via texts().
 object EditorTexts {
     val title = Text("Raw message", "Rohtext")
     val placeholder = Text("Paste or type an HL7 message here…", "HL7-Nachricht hier einfügen oder tippen…")
