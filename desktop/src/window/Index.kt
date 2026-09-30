@@ -19,14 +19,14 @@ import hl7lookup.workspace.Workspace
 import hl7lookup.workspace.Workspaces
 import kotlin.concurrent.thread
 
-// Boots the JVM app: starts HapiEngine, the HTTP server, and the Compose window that hosts Workspace.
+// Boots the JVM app: starts HapiEngine and the Compose window. --server binds the loopback API for the browser client.
 fun main(args: Array<String>) {
     relaunchForWayland()
     val options = parseArgs(args)
     val engine = HapiEngine()
     val transport = DesktopTransport(engine)
     val serverTexts = Servers.texts()
-    val server = if (options.server) {
+    val server = if (options.headless && options.server) {
         Servers.start(engine, transport, options.port, options.webDir)
             .onSuccess { handle ->
                 println(I18n.format(serverTexts.started, hl7lookup.i18n.Language.EN, handle.address))

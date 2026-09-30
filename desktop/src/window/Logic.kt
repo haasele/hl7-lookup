@@ -26,7 +26,7 @@ import java.nio.file.StandardCopyOption
 internal const val APP_VERSION = "2.0.0"
 
 // Captures CLI flags for headless mode, server port, web dir and files to open. parseArgs builds it.
-data class LaunchOptions(val headless: Boolean = false, val server: Boolean = true, val port: Int = Engines.defaultPort(), val webDir: File? = null, val files: List<File> = emptyList())
+data class LaunchOptions(val headless: Boolean = false, val server: Boolean = false, val port: Int = Engines.defaultPort(), val webDir: File? = null, val files: List<File> = emptyList())
 
 // Turns argv into LaunchOptions. main calls it before starting the engine and server.
 internal fun parseArgs(args: Array<String>): LaunchOptions {

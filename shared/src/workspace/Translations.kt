@@ -53,7 +53,7 @@ object WorkspaceTexts {
     val selectField = Text("Select a field to see its values across the list.", "Feld wählen, um seine Werte über die Liste zu sehen.")
     val filtered = Text("{0} of {1} shown (filter)", "{0} von {1} angezeigt (Filter)")
     val engineOnline = Text("HAPI {0}", "HAPI {0}")
-    val engineOffline = Text("Engine offline: start HL7 Lookup desktop for validation, ACKs, sending and new definitions.", "Engine offline: HL7 Lookup Desktop starten für Prüfung, ACKs, Senden und neue Definitionen.")
+    val engineOffline = Text("Engine offline: run HL7 Lookup with --server for validation, ACKs, sending and new definitions.", "Engine offline: HL7 Lookup mit --server starten für Prüfung, ACKs, Senden und neue Definitionen.")
     val interfaceActive = Text("Interface: {0}", "Interface: {0}")
     val findings = Text("{0} errors · {1} warnings", "{0} Fehler · {1} Warnungen")
     val version = Text("HL7 {0}", "HL7 {0}")

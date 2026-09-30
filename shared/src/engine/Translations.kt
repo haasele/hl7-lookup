@@ -7,8 +7,8 @@ import hl7lookup.i18n.Text
 object EngineTexts {
     val offline = Text("HL7 engine unreachable", "HL7-Engine nicht erreichbar")
     val offlineDetail = Text(
-        "Start the desktop application or run it with --server to use definitions, validation and transport.",
-        "Starte die Desktop-Anwendung oder führe sie mit --server aus, um Definitionen, Prüfung und Versand zu nutzen.",
+        "Run HL7 Lookup with --server to use definitions, validation and transport.",
+        "Führe HL7 Lookup mit --server aus, um Definitionen, Prüfung und Versand zu nutzen.",
     )
 }
 

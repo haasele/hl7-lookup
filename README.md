@@ -2,7 +2,7 @@
 
 # HL7 Lookup
 
-A workspace for HL7 v2. The same screen runs as a desktop window and in the browser. Both talk to one engine: HAPI on the JVM parses, validates, builds acknowledgements and serves the message definitions. The browser is a WebAssembly client of that engine.
+A workspace for HL7 v2. The same screen runs as a desktop window and in the browser. The window runs HAPI in-process and opens no port. The browser is a WebAssembly client of a separate headless process.
 
 ## Run the desktop window
 
@@ -12,7 +12,7 @@ The repository carries the [Kotlin toolchain](https://github.com/JetBrains/kotli
 ./kotlin run -m desktop
 ```
 
-The window also listens on `http://127.0.0.1:7780/` and serves the browser client from the last web build. `--port` changes the port. `--no-server` starts the window without the listener.
+The window does not listen on a port, so several copies can run side by side. Configured senders and receivers still open the ports you set for them.
 
 ## Run the browser
 
@@ -23,7 +23,7 @@ Build the web client, then start the engine headless:
 ./kotlin run -m desktop -- --server
 ```
 
-Open `http://127.0.0.1:7780/`. Validation, acknowledgements, new messages and MLLP/HTTP stay in the desktop process. The page only works while that process is running.
+Open `http://127.0.0.1:7780/`. `--port` changes that port. Validation, acknowledgements, new messages and MLLP/HTTP stay in that headless process. The page only works while it is running. The desktop window does not serve this page.
 
 ## Check the build
 
