@@ -152,6 +152,10 @@ EOF
     cat > "$src/hl7-lookup.sh" << EOF
 #!/bin/sh
 export _JAVA_AWT_WM_NONREPARENTING=1
+# Java AWT draws through XWayland. Flatpak omits DISPLAY on a Wayland session.
+if [ -z "\${DISPLAY:-}" ] && [ -S /tmp/.X11-unix/X0 ]; then
+  export DISPLAY=:0
+fi
 exec "/app/hl7-lookup/bin/$name" "\$@"
 EOF
     chmod +x "$src/hl7-lookup.sh"
@@ -164,7 +168,7 @@ sdk: org.freedesktop.Sdk
 command: hl7-lookup
 finish-args:
   - --share=ipc
-  - --socket=fallback-x11
+  - --socket=x11
   - --socket=wayland
   - --device=dri
   - --share=network
