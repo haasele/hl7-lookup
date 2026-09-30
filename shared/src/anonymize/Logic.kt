@@ -57,6 +57,7 @@ private val cacheKey get() = Platforms.key("anonymize", "cache")
 
 private val name = mapOf(1 to Kind.FAMILY, 2 to Kind.GIVEN, 3 to Kind.GIVEN)
 private val xcn = mapOf(1 to Kind.IDENTIFIER, 2 to Kind.FAMILY, 3 to Kind.GIVEN, 4 to Kind.GIVEN)
+private val xpn = name
 private val identifier = mapOf(1 to Kind.IDENTIFIER)
 private val address = mapOf(1 to Kind.STREET, 2 to Kind.STREET, 3 to Kind.CITY, 5 to Kind.POSTAL)
 private val phone = mapOf(1 to Kind.PHONE, 4 to Kind.EMAIL, 6 to Kind.PHONE, 7 to Kind.PHONE)
@@ -80,7 +81,24 @@ internal val targets: Map<String, List<Target>> = mapOf(
         Target(16, name), Target(19, address), Target(36, identifier), Target(49, identifier), Target(46, identifier),
     ),
     "MRG" to listOf(Target(1, identifier), Target(2, identifier), Target(3, identifier), Target(4, identifier), Target(7, name)),
+    "PV1" to listOf(Target(7, xcn), Target(8, xcn), Target(9, xcn), Target(17, xcn), Target(52, xcn)),
+    "PV2" to listOf(Target(13, xcn)),
+    "ORC" to listOf(Target(10, xcn), Target(11, xcn), Target(12, xcn), Target(19, xcn)),
+    "OBR" to listOf(Target(10, xcn), Target(16, xcn), Target(28, xcn), Target(32, xcn), Target(33, xcn), Target(34, xcn), Target(35, xcn)),
+    "OBX" to listOf(Target(16, xcn)),
+    "RXA" to listOf(Target(10, xcn)),
+    "RXO" to listOf(Target(14, xcn)),
+    "RXE" to listOf(Target(14, xcn)),
+    "ROL" to listOf(Target(4, xcn)),
+    "DG1" to listOf(Target(16, xcn)),
+    "TXA" to listOf(Target(5, xcn), Target(9, xcn), Target(10, xcn), Target(22, xcn)),
+    "SCH" to listOf(Target(12, xcn), Target(16, xcn), Target(20, xcn)),
+    "AIP" to listOf(Target(3, xcn)),
+    "PRD" to listOf(Target(2, xpn)),
+    "FT1" to listOf(Target(20, xcn), Target(21, xcn), Target(24, xcn)),
 )
+
+private val structuralSegments = setOf("MSH", "FHS", "BHS")
 
 private val freeTextTypes = setOf("TX", "FT", "ST", "CF")
 
@@ -149,6 +167,62 @@ internal fun replacement(kind: Kind, value: String, cache: AnonymizeCache, book:
     Kind.IDENTIFIER, Kind.POSTAL, Kind.PHONE -> scramble(value, cache.seed)
 }
 
+// Maps a datatype component to the value that should be replaced. replaceByDatatype and editsFor call it.
+private fun sensitiveKind(datatype: String, component: Int): Kind? = when (datatype.substringBefore("^").substringBefore("_")) {
+    "XPN", "PPN" -> when (component) {
+        1 -> Kind.FAMILY
+        2, 3, 4 -> Kind.GIVEN
+        else -> null
+    }
+    "FN" -> if (component == 1) Kind.FAMILY else null
+    "XCN", "CNN" -> when (component) {
+        1 -> Kind.IDENTIFIER
+        2 -> Kind.FAMILY
+        3, 4, 5 -> Kind.GIVEN
+        else -> null
+    }
+    "XON" -> if (component == 1) Kind.ORGANIZATION else null
+    "XAD" -> when (component) {
+        1, 2 -> Kind.STREET
+        3 -> Kind.CITY
+        5 -> Kind.POSTAL
+        else -> null
+    }
+    "SAD" -> if (component in 1..3) Kind.STREET else null
+    "XTN" -> when (component) {
+        4 -> Kind.EMAIL
+        1, 5, 6, 7, 8, 12 -> Kind.PHONE
+        else -> null
+    }
+    "CX", "CK", "PI", "EI" -> if (component == 1) Kind.IDENTIFIER else null
+    else -> null
+}
+
+// Replaces sensitive components of one field from its HL7 datatype. editsFor calls it for every field.
+private fun replaceByDatatype(
+    segment: hl7lookup.document.SegmentNode,
+    field: hl7lookup.document.FieldNode,
+    datatype: String,
+    dictionary: Hl7Dictionary,
+    options: AnonymizeOptions,
+    replace: (FieldPath, Kind) -> Unit,
+) {
+    for (rep in field.repetitions) {
+        if (rep.components.size <= 1) {
+            val kind = sensitiveKind(datatype, 1) ?: continue
+            if (enabled(kind, options)) replace(FieldPath(segment.index, field.number, rep.index), kind)
+            continue
+        }
+        val parts = Dictionaries.components(dictionary, datatype)
+        for (comp in rep.components) {
+            val kind = sensitiveKind(datatype, comp.index)
+                ?: parts.getOrNull(comp.index - 1)?.datatype?.let { sensitiveKind(it, 1) }
+                ?: continue
+            if (enabled(kind, options)) replace(FieldPath(segment.index, field.number, rep.index, comp.index), kind)
+        }
+    }
+}
+
 // Whether options enable a kind. editsFor skips disabled kinds with it.
 private fun enabled(kind: Kind, options: AnonymizeOptions): Boolean = when (kind) {
     Kind.FAMILY, Kind.GIVEN, Kind.ORGANIZATION -> options.names
@@ -175,6 +249,12 @@ internal fun editsFor(message: ParsedMessage, dictionary: Hl7Dictionary?, option
         edits += Edit(path, cache.getOrPut(key) { replacement(kind, value, state, book) })
     }
     for (segment in message.segments) {
+        if (dictionary != null && segment.name !in structuralSegments) {
+            for (field in segment.fields) {
+                val datatype = Dictionaries.field(dictionary, segment.name, field.number)?.datatype ?: continue
+                replaceByDatatype(segment, field, datatype, dictionary, options, ::replace)
+            }
+        }
         for (target in targets[segment.name].orEmpty()) {
             val field = segment.field(target.field) ?: continue
             for (rep in field.repetitions) {

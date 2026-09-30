@@ -136,16 +136,18 @@ internal suspend fun loadMonoFont(url: String): FontFamily? {
     return runCatching { FontFamily(Font("DroidSansMono", bytes)) }.getOrNull()
 }
 
-// Downloads Droid Sans for the interface. host main passes it to Workspace.
-internal suspend fun loadUiFont(regularUrl: String, boldUrl: String): FontFamily? {
-    val regular = fontBytes(regularUrl) ?: return null
-    val bold = fontBytes(boldUrl) ?: regular
+// Downloads Google Sans Flex for the interface. host main passes it to Workspace.
+internal suspend fun loadUiFont(directory: String): FontFamily? {
+    val regular = fontBytes("$directory/GoogleSansFlex-Regular.ttf") ?: return null
+    val medium = fontBytes("$directory/GoogleSansFlex-Medium.ttf") ?: regular
+    val semi = fontBytes("$directory/GoogleSansFlex-SemiBold.ttf") ?: medium
+    val bold = fontBytes("$directory/GoogleSansFlex-Bold.ttf") ?: semi
     return runCatching {
         FontFamily(
-            Font("DroidSans", regular, FontWeight.Normal),
-            Font("DroidSans", regular, FontWeight.Medium),
-            Font("DroidSansBold", bold, FontWeight.SemiBold),
-            Font("DroidSansBold", bold, FontWeight.Bold),
+            Font("GoogleSansFlex", regular, FontWeight.Normal),
+            Font("GoogleSansFlexMedium", medium, FontWeight.Medium),
+            Font("GoogleSansFlexSemiBold", semi, FontWeight.SemiBold),
+            Font("GoogleSansFlexBold", bold, FontWeight.Bold),
         )
     }.getOrNull()
 }

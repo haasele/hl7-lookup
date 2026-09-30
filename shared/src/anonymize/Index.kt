@@ -30,6 +30,9 @@ import kotlin.math.absoluteValue
 object Anonymize {
     // Exposes anonymize wording. Workspace reads it via tr().
     fun texts() = AnonymizeTexts
+    // Rewrites one message with a fresh cache. Tests and callers that need one pass use it.
+    fun rewrite(text: String, dictionary: Hl7Dictionary?, options: AnonymizeOptions = AnonymizeOptions()): String =
+        anonymizeText(text, dictionary, options, mutableMapOf(), freshCache(1L), englishWordbook)
 }
 
 // Options dialog that runs the anonymizer. Workspace opens it for the current message or tab.

@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.FileDialog
 import java.awt.Frame
+import java.awt.EventQueue
 import java.awt.Toolkit
 import java.awt.Window
 import java.awt.datatransfer.DataFlavor
@@ -94,15 +95,18 @@ internal fun loadFont(): FontFamily? = runCatching {
     FontFamily(Font("DroidSansMono", bytes))
 }.getOrNull()
 
-// Loads Droid Sans for the interface. main passes it to Workspace so Windows does not fall back to Times New Roman.
+// Loads Google Sans Flex for the interface. main passes it to Workspace so the UI does not use a system font.
 internal fun loadUiFont(): FontFamily? = runCatching {
-    val regular = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/DroidSans.ttf")!!.use { it.readBytes() }
-    val bold = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/DroidSans-Bold.ttf")!!.use { it.readBytes() }
+    fun bytes(name: String) = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/$name")!!.use { it.readBytes() }
+    val regular = bytes("GoogleSansFlex-Regular.ttf")
+    val medium = bytes("GoogleSansFlex-Medium.ttf")
+    val semi = bytes("GoogleSansFlex-SemiBold.ttf")
+    val bold = bytes("GoogleSansFlex-Bold.ttf")
     FontFamily(
-        Font("DroidSans", regular, FontWeight.Normal),
-        Font("DroidSans", regular, FontWeight.Medium),
-        Font("DroidSansBold", bold, FontWeight.SemiBold),
-        Font("DroidSansBold", bold, FontWeight.Bold),
+        Font("GoogleSansFlex", regular, FontWeight.Normal),
+        Font("GoogleSansFlexMedium", medium, FontWeight.Medium),
+        Font("GoogleSansFlexSemiBold", semi, FontWeight.SemiBold),
+        Font("GoogleSansFlexBold", bold, FontWeight.Bold),
     )
 }.getOrNull()
 
@@ -124,6 +128,65 @@ internal fun logoBitmap(): androidx.compose.ui.graphics.ImageBitmap? = iconBytes
 // Reads CLI file paths into OpenedFile values. main opens each into the workspace.
 internal fun readFiles(files: List<File>): List<OpenedFile> = files.filter { it.isFile }.mapNotNull { file ->
     runCatching { OpenedFile(file.absolutePath, file.readText()) }.getOrNull()
+}
+
+// Reads text from wl-paste or xsel. readClipboard prefers this on Wayland, where AWT clipboard access can kill the process.
+private fun externalClipboard(): String? {
+    if (!System.getenv("WAYLAND_DISPLAY").isNullOrBlank()) commandOutput("wl-paste", "--no-newline")?.let { return it }
+    return commandOutput("xsel", "--clipboard", "--output")
+}
+
+// Writes text with wl-copy or xsel. writeClipboard uses it before AWT.
+private fun externalClipboardWrite(text: String): Boolean {
+    if (!System.getenv("WAYLAND_DISPLAY").isNullOrBlank() && commandInput(text, "wl-copy")) return true
+    return commandInput(text, "xsel", "--clipboard", "--input")
+}
+
+// Runs a clipboard tool and returns stdout when it exits cleanly. externalClipboard calls it.
+private fun commandOutput(vararg command: String): String? = runCatching {
+    val process = ProcessBuilder(*command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+    if (!process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) {
+        process.destroyForcibly()
+        return null
+    }
+    val text = process.inputStream.bufferedReader(Charsets.UTF_8).readText()
+    if (process.exitValue() == 0) text else null
+}.getOrNull()
+
+// Feeds text to a clipboard tool. externalClipboardWrite calls it.
+private fun commandInput(text: String, vararg command: String): Boolean = runCatching {
+    val process = ProcessBuilder(*command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+    process.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(text) }
+    if (!process.waitFor(2, java.util.concurrent.TimeUnit.SECONDS)) {
+        process.destroyForcibly()
+        return false
+    }
+    process.exitValue() == 0
+}.getOrDefault(false)
+
+// Reads the AWT clipboard on the event thread. readClipboard falls back to it.
+private fun awtClipboard(): String? {
+    val read = {
+        runCatching {
+            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+            if (!clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) null
+            else clipboard.getData(DataFlavor.stringFlavor) as? String
+        }.getOrNull()
+    }
+    if (EventQueue.isDispatchThread()) return read()
+    val box = arrayOfNulls<String>(1)
+    runCatching { EventQueue.invokeAndWait { box[0] = read() } }
+    return box[0]
+}
+
+// Writes the AWT clipboard on the event thread. writeClipboard falls back to it.
+private fun awtClipboardWrite(text: String) {
+    val write = { runCatching { Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null) } }
+    if (EventQueue.isDispatchThread()) {
+        write()
+        return
+    }
+    runCatching { EventQueue.invokeAndWait { write() } }
 }
 
 // JVM Platform: file dialogs, clipboard and JSON storage. Workspace uses it through Workspaces.create.
@@ -161,13 +224,14 @@ class DesktopPlatform(private val storage: File) : Platform {
     }
 
     // Reads the system clipboard as text. Workspace paste actions call it.
-    override suspend fun readClipboard(): String? = withContext(Dispatchers.Main) {
-        runCatching { Toolkit.getDefaultToolkit().systemClipboard.getData(DataFlavor.stringFlavor) as? String }.getOrNull()
+    override suspend fun readClipboard(): String? = withContext(Dispatchers.IO) {
+        externalClipboard() ?: awtClipboard()
     }
 
     // Writes text to the system clipboard. Workspace copy actions call it.
-    override suspend fun writeClipboard(text: String) = withContext(Dispatchers.Main) {
-        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+    override suspend fun writeClipboard(text: String) = withContext(Dispatchers.IO) {
+        if (externalClipboardWrite(text)) return@withContext
+        awtClipboardWrite(text)
     }
 
     // Loads a persisted JSON value from the config folder. Session and settings call it through Platform.

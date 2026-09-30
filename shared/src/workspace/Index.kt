@@ -314,7 +314,7 @@ private fun TopBar(state: WorkspaceState, view: View, logo: ImageBitmap?) {
         logo?.let {
             Image(it, tr(WorkspaceTexts.appName), Modifier.padding(start = 4.dp).size(26.dp), contentScale = ContentScale.Fit)
         }
-        Label(tr(WorkspaceTexts.appName), Modifier.padding(horizontal = 8.dp), color = Color.White, weight = FontWeight.Bold, size = 14.sp, maxLines = 1)
+        Label(tr(WorkspaceTexts.brand), Modifier.padding(horizontal = 8.dp), color = Color.White, weight = FontWeight.Bold, size = 14.sp, maxLines = 1)
         MenuButton(tr(WorkspaceTexts.file), file)
         MenuButton(tr(WorkspaceTexts.tools), tools)
         MenuButton(tr(interfaceTexts.menu), interfaceMenu)

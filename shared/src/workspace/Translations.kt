@@ -6,6 +6,7 @@ import hl7lookup.i18n.Text
 // Menu and status wording. workspace/Index reads it via tr().
 object WorkspaceTexts {
     val appName = Text("HL7 Lookup", "HL7 Lookup")
+    val brand = Text("Lookup", "Lookup")
     val file = Text("File", "Datei")
     val tools = Text("Tools", "Werkzeuge")
     val newTab = Text("New tab", "Neuer Tab")

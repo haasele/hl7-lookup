@@ -28,7 +28,7 @@ fun main() {
         var logo by remember { mutableStateOf<ImageBitmap?>(null) }
         LaunchedEffect(Unit) {
             logo = loadLogo("$base/icons/hl7.png")
-            uiFont = loadUiFont("$base/fonts/DroidSans.ttf", "$base/fonts/DroidSans-Bold.ttf") ?: FontFamily.Default
+            uiFont = loadUiFont("$base/fonts") ?: FontFamily.Default
             font = loadMonoFont("$base/fonts/DroidSansMono.ttf") ?: FontFamily.Monospace
         }
         val workspace = remember { Workspaces.create(platform, engine, transport, scope, APP_VERSION) }

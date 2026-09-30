@@ -20,7 +20,7 @@ object AnonymizeTexts {
     val phones = Text("Phone numbers and e-mail", "Telefonnummern und E-Mail")
     val freeText = Text("Free text in NTE and OBX", "Freitext in NTE und OBX")
     val shiftDates = Text("Shift all dates by {0} days", "Alle Datumswerte um {0} Tage verschieben")
-    val coverage = Text("Covers PID, NK1, GT1, IN1 and MRG. Segment structure and field positions stay the same.", "Betrifft PID, NK1, GT1, IN1 und MRG. Segmentstruktur und Feldpositionen bleiben erhalten.")
+    val coverage = Text("Replaces names, identifiers, addresses, phones and organizations wherever the HL7 datatype marks them, plus free text in NTE and OBX. Segment structure stays the same.", "Ersetzt Namen, Kennungen, Adressen, Telefonnummern und Organisationen überall, wo der HL7-Datentyp sie ausweist, plus Freitext in NTE und OBX. Die Segmentstruktur bleibt erhalten.")
     val cacheOne = Text("{0} remembered replacement. The same original value always gets the same replacement.", "{0} gemerkte Ersetzung. Derselbe Originalwert bekommt immer dieselbe Ersetzung.")
     val cache = Text("{0} remembered replacements. The same original value always gets the same replacement.", "{0} gemerkte Ersetzungen. Derselbe Originalwert bekommt immer dieselbe Ersetzung.")
     val resetCache = Text("Forget replacements", "Ersetzungen vergessen")
