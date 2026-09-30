@@ -24,14 +24,16 @@ fun main() {
     ComposeViewport {
         val scope = rememberCoroutineScope()
         var font by remember { mutableStateOf<FontFamily?>(null) }
+        var uiFont by remember { mutableStateOf<FontFamily>(FontFamily.Default) }
         var logo by remember { mutableStateOf<ImageBitmap?>(null) }
         LaunchedEffect(Unit) {
             logo = loadLogo("$base/icons/hl7.png")
+            uiFont = loadUiFont("$base/fonts/DroidSans.ttf", "$base/fonts/DroidSans-Bold.ttf") ?: FontFamily.Default
             font = loadMonoFont("$base/fonts/DroidSansMono.ttf") ?: FontFamily.Monospace
         }
         val workspace = remember { Workspaces.create(platform, engine, transport, scope, APP_VERSION) }
         font?.let {
-            Workspace(workspace, it, logo)
+            Workspace(workspace, it, logo, uiFont)
             LaunchedEffect(it) { dismissLoadingScreen() }
         }
     }

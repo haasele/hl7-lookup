@@ -144,8 +144,8 @@ object Workspaces {
 
 // Builds the root app shell and wires every pane. Desktop window and web host call it.
 @Composable
-fun Workspace(state: WorkspaceState, monoFont: FontFamily, logo: ImageBitmap? = null, modifier: Modifier = Modifier) {
-    AppTheme(monoFont) {
+fun Workspace(state: WorkspaceState, monoFont: FontFamily, logo: ImageBitmap? = null, uiFont: FontFamily = FontFamily.Default, modifier: Modifier = Modifier) {
+    AppTheme(monoFont, uiFont) {
         CompositionLocalProvider(LocalLanguage provides state.settings.current.language, LocalPlatform provides state.platform) {
             if (state.platform.kind == PlatformKind.DESKTOP) StartupSplash { WorkspaceRoot(state, modifier, logo) }
             else WorkspaceRoot(state, modifier, logo)

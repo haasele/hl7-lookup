@@ -46,6 +46,7 @@ fun main(args: Array<String>) {
 
     val platform = DesktopPlatform(storageDirectory()).apply { serverAddress = server?.address }
     val font = loadFont() ?: FontFamily.Monospace
+    val uiFont = loadUiFont() ?: FontFamily.SansSerif
     val logo = logoBitmap()
     val icon = logo?.let { BitmapPainter(it) }
     val files = readFiles(options.files)
@@ -73,7 +74,7 @@ fun main(args: Array<String>) {
                 releaseWindowSizeLimits(window)
                 applyWindowIcon(window)
             }
-            Workspace(workspace, font, logo)
+            Workspace(workspace, font, logo, uiFont)
         }
     }
 }

@@ -31,6 +31,6 @@ internal val thirdParty = listOf(
     Component("kotlinx.coroutines, kotlinx.serialization, kotlinx-datetime", "", "Apache License 2.0", "https://github.com/Kotlin"),
     Component("Skiko", "0.9", "Apache License 2.0", "https://github.com/JetBrains/skiko"),
     Component("js-joda", "", "BSD 3-Clause License", "https://js-joda.github.io/js-joda/"),
-    Component("Droid Sans Mono", "1.00", "Apache License 2.0", "https://android.googlesource.com/platform/frameworks/base/+/master/data/fonts/DroidSansMono.ttf"),
+    Component("Droid Sans and Droid Sans Mono", "1.00", "Apache License 2.0", "https://android.googlesource.com/platform/frameworks/base/+/master/data/fonts/"),
     Component("SLF4J", "2.0", "MIT License", "https://www.slf4j.org"),
 )

@@ -4,6 +4,7 @@ package hl7lookup.web.host
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import org.jetbrains.skia.Image
 import hl7lookup.dictionary.Hl7Dictionary
@@ -122,12 +123,31 @@ internal suspend fun loadLogo(url: String): ImageBitmap? {
     return runCatching { Image.makeFromEncoded(bytes).toComposeImageBitmap() }.getOrNull()
 }
 
-// Downloads and builds a monospace FontFamily. host main loads it for Workspace.
-internal suspend fun loadMonoFont(url: String): FontFamily? {
+// Downloads a font file. loadMonoFont and loadUiFont call it.
+private suspend fun fontBytes(url: String): ByteArray? {
     val array = runCatching { fetchBytes(url).await<JsAny?>() }.getOrNull() ?: return null
     val size = lengthOf(array)
-    val bytes = ByteArray(size) { byteAt(array, it) }
+    return ByteArray(size) { byteAt(array, it) }
+}
+
+// Downloads and builds a monospace FontFamily. host main loads it for Workspace.
+internal suspend fun loadMonoFont(url: String): FontFamily? {
+    val bytes = fontBytes(url) ?: return null
     return runCatching { FontFamily(Font("DroidSansMono", bytes)) }.getOrNull()
+}
+
+// Downloads Droid Sans for the interface. host main passes it to Workspace.
+internal suspend fun loadUiFont(regularUrl: String, boldUrl: String): FontFamily? {
+    val regular = fontBytes(regularUrl) ?: return null
+    val bold = fontBytes(boldUrl) ?: regular
+    return runCatching {
+        FontFamily(
+            Font("DroidSans", regular, FontWeight.Normal),
+            Font("DroidSans", regular, FontWeight.Medium),
+            Font("DroidSansBold", bold, FontWeight.SemiBold),
+            Font("DroidSansBold", bold, FontWeight.Bold),
+        )
+    }.getOrNull()
 }
 
 // Browser Platform for files, clipboard and storage. host main passes it to Workspaces.create.

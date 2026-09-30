@@ -3,6 +3,7 @@ package hl7lookup.desktop.window
 
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
 import hl7lookup.engine.Engines
 import hl7lookup.platform.OpenedFile
@@ -91,6 +92,18 @@ internal fun keyFile(directory: File, key: String): File = directory.resolve(key
 internal fun loadFont(): FontFamily? = runCatching {
     val bytes = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/DroidSansMono.ttf")!!.use { it.readBytes() }
     FontFamily(Font("DroidSansMono", bytes))
+}.getOrNull()
+
+// Loads Droid Sans for the interface. main passes it to Workspace so Windows does not fall back to Times New Roman.
+internal fun loadUiFont(): FontFamily? = runCatching {
+    val regular = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/DroidSans.ttf")!!.use { it.readBytes() }
+    val bold = Thread.currentThread().contextClassLoader.getResourceAsStream("fonts/DroidSans-Bold.ttf")!!.use { it.readBytes() }
+    FontFamily(
+        Font("DroidSans", regular, FontWeight.Normal),
+        Font("DroidSans", regular, FontWeight.Medium),
+        Font("DroidSansBold", bold, FontWeight.SemiBold),
+        Font("DroidSansBold", bold, FontWeight.Bold),
+    )
 }.getOrNull()
 
 // Reads the PNG icon bytes from resources. applyWindowIcon and logoBitmap call it.

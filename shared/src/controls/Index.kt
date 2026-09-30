@@ -79,6 +79,7 @@ import hl7lookup.theme.Icon
 import hl7lookup.theme.IconShape
 import hl7lookup.theme.LocalMonoFont
 import hl7lookup.theme.LocalPalette
+import hl7lookup.theme.LocalUiFont
 
 // Shared button/label helpers and panel chrome. Feature screens compose these widgets.
 object Controls {
@@ -110,7 +111,7 @@ fun Label(
         color = color,
         fontSize = size,
         fontWeight = weight,
-        fontFamily = if (mono) LocalMonoFont.current else null,
+        fontFamily = if (mono) LocalMonoFont.current else LocalUiFont.current,
         maxLines = maxLines,
         overflow = if (maxLines == Int.MAX_VALUE) TextOverflow.Clip else TextOverflow.Ellipsis,
         textAlign = align,
@@ -332,7 +333,7 @@ fun TextInput(
     onSubmit: (() -> Unit)? = null,
 ) {
     val palette = LocalPalette.current
-    val style = TextStyle(color = palette.text, fontSize = 13.sp, fontFamily = if (mono) LocalMonoFont.current else null)
+    val style = TextStyle(color = palette.text, fontSize = 13.sp, fontFamily = if (mono) LocalMonoFont.current else LocalUiFont.current)
     BasicTextField(
         value = value,
         onValueChange = onChange,
